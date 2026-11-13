@@ -29,13 +29,69 @@ export interface MongoSettings {
     readonly database: string;
 }
 
-/** Opens the connection pool and resolves once MongoDB is reachable. */
-export async function connectMongo(settings: MongoSettings): Promise<Connection> {
-    return mongoose
-        .createConnection(settings.uri, {
-            dbName: settings.database,
-            serverSelectionTimeoutMS: SERVER_SELECTION_TIMEOUT_MS,
-            maxPoolSize: MAX_POOL_SIZE,
-        })
-        .asPromise();
+/**
+ * Owns the connection pool's whole lifecycle: connect, use, ping, close.
+ *
+ * A class, not functions, because it holds STATE (connected or not) and
+ * guards it: using the connection before `connect()` fails with a clear
+ * message instead of a confusing `undefined` somewhere deeper.
+ */
+export class DatabaseConnection {
+    // `#` = truly private at runtime (not just to the type checker), and
+    // erasable syntax that Node can run directly.
+    readonly #settings: MongoSettings;
+    #connection: Connection | undefined;
+
+    constructor(settings: MongoSettings) {
+        this.#settings = settings;
+    }
+
+    get databaseName(): string {
+        return this.#settings.database;
+    }
+
+    get isConnected(): boolean {
+        return this.#connection !== undefined;
+    }
+
+    /** The Mongoose connection, for repositories. Only after `connect()`. */
+    get connection(): Connection {
+        if (!this.#connection) {
+            throw new Error("The database is not connected: call connect() first");
+        }
+        return this.#connection;
+    }
+
+    /** Opens the pool and resolves once MongoDB is reachable. */
+    async connect(): Promise<void> {
+        if (this.#connection) {
+            throw new Error("The database is already connected (a second pool is never wanted)");
+        }
+        this.#connection = await mongoose
+            .createConnection(this.#settings.uri, {
+                dbName: this.#settings.database,
+                serverSelectionTimeoutMS: SERVER_SELECTION_TIMEOUT_MS,
+                maxPoolSize: MAX_POOL_SIZE,
+            })
+            .asPromise();
+    }
+
+    /** Sends MongoDB a `ping` and resolves with the round trip in milliseconds. */
+    async ping(): Promise<number> {
+        const db = this.connection.db;
+        if (!db) throw new Error("Connected, but no database handle is available");
+
+        const started = performance.now();
+        await db.command({ ping: 1 });
+        return Math.round(performance.now() - started);
+    }
+
+    /** Closes the pool. Safe to call when not connected, or twice. */
+    async close(): Promise<void> {
+        const connection = this.#connection;
+        if (!connection) return;
+
+        this.#connection = undefined;
+        await connection.close();
+    }
 }
