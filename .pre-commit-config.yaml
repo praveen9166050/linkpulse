@@ -2,6 +2,10 @@
 #   pip install pre-commit
 #   pre-commit install --hook-type pre-commit --hook-type commit-msg
 # Update hook versions any time with: pre-commit autoupdate
+
+# Hooks run on `git commit` (file checks) unless they set their own stage.
+default_stages: [pre-commit]
+
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0
