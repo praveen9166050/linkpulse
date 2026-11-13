@@ -112,22 +112,52 @@ paths:
             tags: [Operations]
             summary: Check service health
             description: |
-                Used by load balancers to decide whether to send traffic here. Reports
-                `degraded` with **503** when the event loop is lagging (CPU-bound work is
-                blocking it), so traffic moves to a healthy instance.
+                Used by load balancers to decide whether to send traffic here (a
+                readiness check). Reports `degraded` with **503** when this instance
+                can't serve requests well: MongoDB doesn't answer a ping within 2
+                seconds, or the event loop is lagging (CPU-bound work is blocking it),
+                so traffic moves to a healthy instance. Never cached.
             responses:
                 "200":
                     description: The service is healthy.
+                    headers:
+                        Cache-Control:
+                            schema:
+                                type: string
+                                const: no-store
                     content:
                         application/json:
                             schema:
                                 $ref: "#/components/schemas/Health"
+                            example:
+                                status: ok
+                                database:
+                                    status: up
+                                    latencyMs: 32
+                                eventLoopDelayMs:
+                                    p50: 10.2
+                                    p99: 12.6
+                                uptimeSeconds: 3600.5
                 "503":
-                    description: The service is overloaded; send traffic elsewhere.
+                    description: The service is degraded; send traffic elsewhere.
+                    headers:
+                        Cache-Control:
+                            schema:
+                                type: string
+                                const: no-store
                     content:
                         application/json:
                             schema:
                                 $ref: "#/components/schemas/Health"
+                            example:
+                                status: degraded
+                                database:
+                                    status: down
+                                    latencyMs: null
+                                eventLoopDelayMs:
+                                    p50: 10.1
+                                    p99: 11.8
+                                uptimeSeconds: 3600.5
 
 components:
     schemas:
@@ -185,11 +215,22 @@ components:
 
         Health:
             type: object
-            required: [status, eventLoopDelayMs, uptimeSeconds]
+            required: [status, database, eventLoopDelayMs, uptimeSeconds]
             properties:
                 status:
                     type: string
                     enum: [ok, degraded]
+                database:
+                    type: object
+                    description: The result of pinging MongoDB.
+                    required: [status, latencyMs]
+                    properties:
+                        status:
+                            type: string
+                            enum: [up, down]
+                        latencyMs:
+                            type: ["number", "null"]
+                            description: Ping round trip, or `null` when the ping failed or timed out.
                 eventLoopDelayMs:
                     type: object
                     description: How long callbacks waited for the event loop, recently.
@@ -201,6 +242,7 @@ components:
                             type: number
                 uptimeSeconds:
                     type: number
+                    description: Seconds since this process started.
 
         Problem:
             type: object
