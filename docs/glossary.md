@@ -39,6 +39,8 @@ word for one of these, the code should change.
 | **Connection pool** | A set of open database connections reused across requests, opened once at startup | `DatabaseConnection` in `mongo.connection.ts` |
 | **Duplicate key (E11000)** | MongoDB rejecting an insert whose unique key already exists: how "code taken" is detected atomically | `isDuplicateKeyError` |
 | **Config** | The app's settings, read from the environment and validated at startup | `loadAppConfig` |
+| **Health check** | An endpoint a load balancer calls to decide whether to send this instance traffic. Ours is a *readiness* check: 503 when MongoDB doesn't answer or the event loop lags | `GET /health`, `HealthService` |
+| **Event loop delay** | How late Node's single JavaScript thread runs scheduled work; high when CPU-bound code blocks it, so every request waits | `EventLoopDelayService` |
 | **Test database** | `linkpulse_test`: the only database tests write to, with one collection per test file | `test/shared/test-database.ts` |
 | **Domain error** | An error a value object or service throws when a business rule is broken, with a typed `reason` | `InvalidShortCodeError`, `InvalidTargetUrlError` |
 | **Response error** | An error that becomes an HTTP response with its status and Problem type | `ResponseError` and `BadRequestError` (400), `NotFoundError` (404), `ConflictError` (409), `ContentTooLargeError` (413) |
