@@ -5,27 +5,28 @@
  * Never prints the connection string: it contains the password.
  */
 import { loadAppConfig } from "#src/config/app.config.ts";
-import { connectMongo } from "#src/databases/mongo.connection.ts";
+import { DatabaseConnection } from "#src/databases/mongo.connection.ts";
 
 const config = loadAppConfig();
 const host = URL.parse(config.mongodb.uri)?.host ?? "(unparseable host)";
+const database = new DatabaseConnection(config.mongodb);
 
-process.stdout.write(`Connecting to ${host}, database "${config.mongodb.database}"...\n`);
+process.stdout.write(`Connecting to ${host}, database "${database.databaseName}"...\n`);
 const started = performance.now();
 
 try {
-    const connection = await connectMongo(config.mongodb);
+    await database.connect();
+    const connected = Math.round(performance.now() - started);
+    const roundTrip = await database.ping();
 
-    const db = connection.db;
-    if (!db) throw new Error("Connected, but no database handle is available");
-    await db.command({ ping: 1 });
-    const elapsed = Math.round(performance.now() - started);
-
-    process.stdout.write(`OK: connected and pinged in ${String(elapsed)} ms\n`);
-    await connection.close();
+    process.stdout.write(
+        `OK: connected in ${String(connected)} ms, ping round trip ${String(roundTrip)} ms\n`,
+    );
 } catch (error) {
     process.stderr.write(`FAILED: ${explain(error)}\n`);
     process.exitCode = 1;
+} finally {
+    await database.close(); // does nothing if connect() failed
 }
 
 /** Turns the most common connection failures into a likely cause. */

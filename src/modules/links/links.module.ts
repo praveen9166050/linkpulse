@@ -9,7 +9,7 @@
 import type { Router } from "express";
 import type { ClockService } from "#src/services/clock.service.ts";
 import type { LinkRepository } from "./database/repositories/link.repository.ts";
-import { createLinksController } from "./links.controller.ts";
+import { LinksController } from "./links.controller.ts";
 import { linksRoutes } from "./links.routes.ts";
 import { LinksService } from "./links.service.ts";
 import type { ShortCodeGeneratorService } from "./short-code-generator.service.ts";
@@ -29,5 +29,5 @@ export function linksModule(deps: LinksModuleDependencies): Router {
         clock: deps.clock,
     });
 
-    return linksRoutes(createLinksController({ linksService, publicBaseUrl: deps.publicBaseUrl }));
+    return linksRoutes(new LinksController({ linksService, publicBaseUrl: deps.publicBaseUrl }));
 }

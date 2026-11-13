@@ -9,7 +9,7 @@
 import { randomUUID } from "node:crypto";
 import type { Connection } from "mongoose";
 import { loadAppConfig } from "#src/config/app.config.ts";
-import { connectMongo } from "#src/databases/mongo.connection.ts";
+import { DatabaseConnection } from "#src/databases/mongo.connection.ts";
 
 /** The only database tests may touch (the app user can write only here and linkpulse_dev). */
 export const TEST_DATABASE = "linkpulse_test";
@@ -26,7 +26,9 @@ export interface TestDatabase {
 
 export async function connectTestDatabase(): Promise<TestDatabase> {
     const { uri } = loadAppConfig().mongodb;
-    const connection = await connectMongo({ uri, database: TEST_DATABASE });
+    const database = new DatabaseConnection({ uri, database: TEST_DATABASE });
+    await database.connect();
+    const connection = database.connection;
     const linksCollection = `links_test_${randomUUID().slice(0, 8)}`;
 
     return {
@@ -41,7 +43,7 @@ export async function connectTestDatabase(): Promise<TestDatabase> {
             } catch {
                 // Never created (no test inserted anything): nothing to drop.
             }
-            await connection.close();
+            await database.close();
         },
     };
 }

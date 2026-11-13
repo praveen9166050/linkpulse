@@ -36,7 +36,7 @@ word for one of these, the code should change.
 | **Document** | One record in MongoDB, stored as JSON-like data (BSON). One link is one document | `{ _id, target, createdAt }` |
 | **Collection** | A group of documents, like a table without a fixed schema | `links` |
 | **Schema** | The declared shape of a stored document, separate from the entity it holds | `link.schema.ts` |
-| **Connection pool** | A set of open database connections reused across requests, opened once at startup | `connectMongo` in `mongo.connection.ts` |
+| **Connection pool** | A set of open database connections reused across requests, opened once at startup | `DatabaseConnection` in `mongo.connection.ts` |
 | **Duplicate key (E11000)** | MongoDB rejecting an insert whose unique key already exists: how "code taken" is detected atomically | `isDuplicateKeyError` |
 | **Config** | The app's settings, read from the environment and validated at startup | `loadAppConfig` |
 | **Test database** | `linkpulse_test`: the only database tests write to, with one collection per test file | `test/shared/test-database.ts` |

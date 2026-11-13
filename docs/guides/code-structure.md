@@ -99,7 +99,7 @@ variables `camelCase`. Indentation is 4 spaces.
 | Role | File | Export |
 | --- | --- | --- |
 | Module | `links.module.ts` | `linksModule` |
-| Controller | `links.controller.ts` | `createLinksController` |
+| Controller | `links.controller.ts` | `LinksController` |
 | Routes | `links.routes.ts` | `linksRoutes` |
 | Service | `links.service.ts`, `clock.service.ts` | `LinksService`, `ClockService` |
 | Value object | `short-code.value-object.ts` | `ShortCode` |
@@ -112,6 +112,38 @@ variables `camelCase`. Indentation is 4 spaces.
 | Middleware | `error-handler.ts` (no suffix) | `errorHandler` |
 | Unit test | `__tests__/links.service.test.ts` | |
 | API test | `test/integration/links.api.test.ts` | |
+
+## Class or function?
+
+**A class when something holds state or dependencies and has behaviour
+around them; a plain function when it just turns input into output.**
+
+| Write a class for | Examples |
+| --- | --- |
+| Services, repositories, controllers: dependencies arrive through the constructor | `LinksService`, `LinkRepository`, `LinksController` |
+| Something with a lifecycle or state to guard | `DatabaseConnection` (connected or not) |
+| Entities and value objects: data plus the rules that protect it | `Link`, `ShortCode`, `TargetUrl` |
+| Errors: `instanceof`, inheritance, stack traces | `NotFoundError`, `ConfigError` |
+
+| Keep a function for | Examples |
+| --- | --- |
+| Express middleware: Express's contract is a function | `errorHandler`, `notFound` |
+| DTO parsers and mappers: pure, no state | `parseCreateLinkDto`, `toLinkResponseDto` |
+| Small checks and one-off setup | `isDuplicateKeyError`, `loadAppConfig`, `linksModule`, `linksRoutes` |
+
+Rules that go with it:
+
+- **No static-only classes** (`class Utils { static parse() }`): a module
+  of exported functions already is that container.
+- **`#private` fields**, not TypeScript's `private`: `#` is enforced at
+  runtime and is syntax Node can run directly.
+- **Handlers passed to Express are arrow-function fields**
+  (`readonly follow = async (req, res) => {...}`). An ordinary method
+  passed as a callback loses `this` and crashes; ESLint's
+  `unbound-method` rule reports it.
+- **Depend on what you use:** a constructor can ask for
+  `Pick<LinksService, "createLink" | "followLink">` rather than the whole
+  class, so a small stand-in works in unit tests.
 
 ## Adding a feature or operation (checklist)
 
