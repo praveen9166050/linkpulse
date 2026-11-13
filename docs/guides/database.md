@@ -70,6 +70,8 @@ in the shell win over `.env`, so CI and hosting platforms set them directly.
 | `MONGODB_DATABASE` | Yes | | Letters, digits, `_` or `-`, up to 38 characters |
 | `PORT` | No | `3000` | A whole number from 0 to 65535 |
 | `PUBLIC_BASE_URL` | No | Where the server listens | `http` or `https`; a trailing `/` is removed |
+| `CORS_ORIGINS` | No | none | Comma-separated origins (`http://localhost:3001`) whose pages may call the API from a browser. Exact origins only; never `*` |
+| `DEV_TOOLS` | No | `false` | `true` turns on dev-only endpoints (the live request stream). Exactly `true` or `false`; never in production |
 
 All problems are reported together, so one run shows everything to fix.
 

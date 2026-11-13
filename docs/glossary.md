@@ -42,6 +42,10 @@ word for one of these, the code should change.
 | **Keyset (cursor) pagination** | Paging by position ("links older than this one") instead of by count (`skip`). Every page costs the same and pages don't shift when data is added | `listQuery`, `GET /api/v1/links?cursor=` |
 | **Cursor** | An opaque token for where a page ended; clients pass it back unchanged | `link-cursor.ts` |
 | **Compound index** | One index on several fields, in a set order; it can serve a sort on those fields without sorting in memory | `{ createdAt: -1, _id: -1 }` in `link.schema.ts` |
+| **Origin / CORS** | An origin is scheme + host + port (`http://localhost:3001`). Browsers let a page read responses from another origin only if that server names it in `Access-Control-Allow-Origin` (Cross-Origin Resource Sharing) | `cors` in `app.ts`, `CORS_ORIGINS` |
+| **Server-Sent Events (SSE)** | One HTTP response that never ends, carrying `event:`/`data:` text blocks; the browser's `EventSource` reads them as they arrive and reconnects by itself | `GET /api/v1/dev/requests` |
+| **Event bus** | Publish/subscribe inside the process (the Observer pattern): publishers don't know who listens | `RequestLogService` |
+| **Backpressure** | When a consumer reads slower than a producer writes; the stream drops events for a slow client rather than buffering without limit | `request-stream.controller.ts` |
 | **Health check** | An endpoint a load balancer calls to decide whether to send this instance traffic. Ours is a *readiness* check: 503 when MongoDB doesn't answer or the event loop lags | `GET /health`, `HealthService` |
 | **Event loop delay** | How late Node's single JavaScript thread runs scheduled work; high when CPU-bound code blocks it, so every request waits | `EventLoopDelayService` |
 | **Test database** | `linkpulse_test`: the only database tests write to, with one collection per test file | `test/shared/test-database.ts` |
