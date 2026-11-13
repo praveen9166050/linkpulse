@@ -43,6 +43,8 @@ word for one of these, the code should change.
 | **Domain error** | An error a value object or service throws when a business rule is broken, with a typed `reason` | `InvalidShortCodeError`, `InvalidTargetUrlError` |
 | **Response error** | An error that becomes an HTTP response with its status and Problem type | `ResponseError` and `BadRequestError` (400), `NotFoundError` (404), `ConflictError` (409), `ContentTooLargeError` (413) |
 | **Middleware** | A function every request passes through, in order | `express.json`, `notFound`, `errorHandler` |
+| **Route middleware** | Middleware listed on one route, before its controller, that can end the request early | `validateBody(parseCreateLinkDto)` |
+| **Middleware chain** | A route's middleware and controller, run in order; each calls `next()` or ends the request (Chain of Responsibility) | `links.routes.ts` |
 | **Problem Details** | The standard JSON error format (RFC 9457) | `application/problem+json` responses |
 | **Unit test** | Tests one file in isolation, fast, no server | `__tests__/*.test.ts` |
 | **Integration test** | Tests through real HTTP or a real database | `test/integration/*.test.ts` |
