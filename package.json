@@ -9,6 +9,8 @@
         "node": ">=26"
     },
     "scripts": {
+        "start": "node src/apps/api/main.ts",
+        "dev": "node --watch src/apps/api/main.ts",
         "typecheck": "tsc",
         "lint": "eslint .",
         "lint:fix": "eslint . --fix",

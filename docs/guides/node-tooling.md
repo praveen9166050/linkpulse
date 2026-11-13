@@ -10,6 +10,8 @@ Defined under `"scripts"` in `package.json`. Run any of them with `npm run <name
 | Command | Runs | Does |
 | --- | --- | --- |
 | `npm ci` | — | Install exactly what `package-lock.json` lists. Use after cloning or pulling |
+| `npm start` | `node src/apps/api/main.ts` | Run the API on port 3000 (`PORT` and `PUBLIC_BASE_URL` override). Ctrl+C shuts it down gracefully |
+| `npm run dev` | `node --watch src/apps/api/main.ts` | Same, but restarts automatically when a file changes |
 | `npm run check` | format:check, lint, lint:api, typecheck, test | Everything CI will run. **Run before every push** |
 | `npm run format:check` | `prettier --check .` | Is every file formatted? (changes nothing) |
 | `npm run format` | `prettier --write .` | Format every file |
@@ -28,6 +30,33 @@ Run a TypeScript file directly, with no build step:
 ```powershell
 node src/apps/api/main.ts
 ```
+
+## Trying the API with curl
+
+Start the API with `npm start`, then in another terminal:
+
+```powershell
+# Shorten a URL (send JSON from a file: see the Windows note below)
+Set-Content body.json '{"url": "https://example.com/articles/2026/how-dns-works"}' -NoNewline
+curl.exe -i -X POST http://127.0.0.1:3000/api/v1/links -H "content-type: application/json" -d "@body.json"
+
+# Follow the short link (curl shows the 302 instead of following it)
+curl.exe -i http://127.0.0.1:3000/<code>
+```
+
+| Flag | Meaning |
+| --- | --- |
+| `-i` | Print the response headers too (status, `location`, `cache-control`) |
+| `-X POST` | The HTTP method |
+| `-H "..."` | Add a request header |
+| `-d "@body.json"` | Send the contents of `body.json` as the request body |
+
+**Windows note:** in Windows PowerShell 5.1, `curl` is an alias for
+`Invoke-WebRequest`, so type `curl.exe`. And PowerShell 5.1 strips double
+quotes from arguments passed to programs, so `-d '{"url": "..."}'` arrives
+as `{url: ...}` (invalid JSON, answered with `400 invalid-json`). Sending
+the body from a file avoids it. PowerShell 7 and Git Bash don't have this
+problem.
 
 ## npm install vs npm ci
 
