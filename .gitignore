@@ -1,0 +1,34 @@
+# Binaries
+/bin/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test and coverage output
+*.test
+*.out
+coverage.*
+*.prof
+
+# Go workspace file (local only)
+go.work
+go.work.sum
+
+# Environment and secrets: never commit these
+.env
+.env.*
+!.env.example
+
+# AWS SAM / CloudFormation build output
+.aws-sam/
+packaged*.yaml
+
+# Editors and OS
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.swp
+.DS_Store
+Thumbs.db

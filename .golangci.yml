@@ -1,0 +1,28 @@
+# golangci-lint v2 config. Run: make lint
+version: "2"
+
+run:
+  timeout: 3m
+
+linters:
+  default: standard        # errcheck, govet, ineffassign, staticcheck, unused
+  enable:
+    - bodyclose            # HTTP response bodies must be closed
+    - errorlint            # wrap and compare errors correctly (errors.Is / errors.As)
+    - gocyclo              # flags functions that are too complex (a code smell)
+    - dupl                 # flags copy-pasted code (an anti-pattern)
+    - goconst              # repeated strings that should be constants (magic strings)
+    - misspell
+    - revive               # style and naming conventions
+    - gosec                # common security mistakes
+    - noctx                # HTTP requests without context
+  settings:
+    gocyclo:
+      min-complexity: 15
+    dupl:
+      threshold: 120
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
