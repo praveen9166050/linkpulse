@@ -1,31 +1,31 @@
 {
-  "name": "linkpulse",
-  "version": "0.0.0",
-  "private": true,
-  "description": "URL shortener in TypeScript on Node.js, built phase by phase to learn backend and cloud engineering",
-  "license": "MIT",
-  "type": "module",
-  "engines": {
-    "node": ">=26"
-  },
-  "scripts": {
-    "typecheck": "tsc",
-    "lint": "eslint .",
-    "lint:fix": "eslint . --fix",
-    "format": "prettier --write .",
-    "format:check": "prettier --check .",
-    "test": "vitest run --passWithNoTests",
-    "test:watch": "vitest",
-    "check": "npm run format:check && npm run lint && npm run typecheck && npm run test"
-  },
-  "devDependencies": {
-    "@eslint/js": "10.0.1",
-    "@types/node": "26.6.6",
-    "eslint": "10.14.0",
-    "eslint-config-prettier": "10.1.8",
-    "prettier": "3.10.1",
-    "typescript": "6.0.3",
-    "typescript-eslint": "8.72.2",
-    "vitest": "5.1.0"
-  }
+    "name": "linkpulse",
+    "version": "0.0.0",
+    "private": true,
+    "description": "URL shortener in TypeScript on Node.js, built phase by phase to learn backend and cloud engineering",
+    "license": "MIT",
+    "type": "module",
+    "engines": {
+        "node": ">=26"
+    },
+    "scripts": {
+        "typecheck": "tsc",
+        "lint": "eslint .",
+        "lint:fix": "eslint . --fix",
+        "format": "prettier --write .",
+        "format:check": "prettier --check .",
+        "test": "vitest run --passWithNoTests",
+        "test:watch": "vitest",
+        "check": "npm run format:check && npm run lint && npm run typecheck && npm run test"
+    },
+    "devDependencies": {
+        "@eslint/js": "10.0.1",
+        "@types/node": "26.6.6",
+        "eslint": "10.14.0",
+        "eslint-config-prettier": "10.1.8",
+        "prettier": "3.10.1",
+        "typescript": "6.0.3",
+        "typescript-eslint": "8.72.2",
+        "vitest": "5.1.0"
+    }
 }
