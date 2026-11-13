@@ -23,6 +23,10 @@ export interface AppConfig {
         readonly uri: string;
         readonly database: string;
     };
+    /** Origins (scheme + host + port) whose pages may call the API from a browser. */
+    readonly corsOrigins: readonly string[];
+    /** Dev-only endpoints, such as the live request stream. Off unless "true". */
+    readonly devTools: boolean;
 }
 
 type Env = Readonly<Record<string, string | undefined>>;
@@ -46,9 +50,11 @@ export function parseAppConfig(env: Env): AppConfig {
     const publicBaseUrl = parsePublicBaseUrl(env.PUBLIC_BASE_URL, problems);
     const uri = parseMongoUri(env.MONGODB_URI, problems);
     const database = parseDatabaseName(env.MONGODB_DATABASE, problems);
+    const corsOrigins = parseCorsOrigins(env.CORS_ORIGINS, problems);
+    const devTools = parseDevTools(env.DEV_TOOLS, problems);
 
     if (problems.length > 0) throw new ConfigError(problems);
-    return { port, publicBaseUrl, mongodb: { uri, database } };
+    return { port, publicBaseUrl, mongodb: { uri, database }, corsOrigins, devTools };
 }
 
 function parsePort(value: string | undefined, problems: string[]): number {
@@ -94,4 +100,36 @@ function parseDatabaseName(value: string | undefined, problems: string[]): strin
         problems.push(`MONGODB_DATABASE must be 1-38 letters, digits, _ or - (got "${value}")`);
     }
     return value;
+}
+
+/**
+ * A comma-separated allow-list. Each entry must be exactly an ORIGIN
+ * (scheme://host[:port]), which is what browsers send in the Origin header:
+ * no path, no trailing slash, and never "*" (any site at all).
+ */
+function parseCorsOrigins(value: string | undefined, problems: string[]): readonly string[] {
+    if (value === undefined) return [];
+    const entries = value
+        .split(",")
+        .map((entry) => entry.trim())
+        .filter((entry) => entry !== "");
+    for (const entry of entries) {
+        const url = URL.parse(entry);
+        const isOrigin =
+            url !== null && ["http:", "https:"].includes(url.protocol) && url.origin === entry;
+        if (!isOrigin) {
+            problems.push(
+                `CORS_ORIGINS entries must be origins like http://localhost:3001 (got "${entry}")`,
+            );
+        }
+    }
+    return entries;
+}
+
+/** Only the exact words: a typo such as "ture" must not quietly switch dev tools on. */
+function parseDevTools(value: string | undefined, problems: string[]): boolean {
+    if (value === undefined || value === "" || value === "false") return false;
+    if (value === "true") return true;
+    problems.push(`DEV_TOOLS must be "true" or "false" (got "${value}")`);
+    return false;
 }

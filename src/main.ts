@@ -25,8 +25,15 @@ try {
         port: config.port,
         publicBaseUrl: config.publicBaseUrl,
         database,
+        corsOrigins: config.corsOrigins,
+        devTools: config.devTools,
     });
     process.stdout.write(`LinkPulse API listening on ${server.baseUrl}\n`);
+    if (config.devTools) {
+        process.stdout.write(
+            `Dev tools ON: live request log at ${server.baseUrl}/api/v1/dev/requests\n`,
+        );
+    }
 
     shutDownGracefullyOnSignal(server, database);
 } catch (error) {

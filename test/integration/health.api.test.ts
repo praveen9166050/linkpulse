@@ -21,6 +21,11 @@ describe("GET /health", () => {
             port: 0,
             database: database.databaseConnection,
             linksCollection: database.linksCollection,
+            // This test checks the response's shape and the database ping. Event-loop
+            // lag depends on how busy the machine is (26 test files run in parallel),
+            // which a test mustn't depend on; "lagging loop -> degraded" is covered
+            // deterministically by the HealthService unit tests.
+            healthEventLoopP99LimitMs: 60_000,
         });
     });
 

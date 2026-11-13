@@ -12,6 +12,14 @@ export interface ServerOptions {
     readonly database: DatabaseConnection;
     /** Override the links collection (tests use one per test file). */
     readonly linksCollection?: string;
+    /** Origins whose pages may call the API from a browser (CORS). */
+    readonly corsOrigins?: readonly string[];
+    /** Mount the dev-only endpoints (the live request stream). */
+    readonly devTools?: boolean;
+    /** On stop(), how long open requests get to finish before being cut. Default 5 s. */
+    readonly shutdownGraceMs?: number;
+    /** Event-loop p99 (ms) above which /health reports degraded. Default 200. */
+    readonly healthEventLoopP99LimitMs?: number;
 }
 
 export interface RunningServer {
@@ -23,6 +31,8 @@ export interface RunningServer {
 
 /** Loopback only: reachable from this machine, not from the network. */
 const DEFAULT_HOST = "127.0.0.1";
+
+const DEFAULT_SHUTDOWN_GRACE_MS = 5000;
 
 /** Starts the LinkPulse API and resolves once it is listening. */
 export async function startServer(options: ServerOptions): Promise<RunningServer> {
@@ -44,10 +54,14 @@ export async function startServer(options: ServerOptions): Promise<RunningServer
             publicBaseUrl: options.publicBaseUrl ?? baseUrl,
             database: options.database,
             linksCollection: options.linksCollection,
+            corsOrigins: options.corsOrigins,
+            devTools: options.devTools,
+            healthEventLoopP99LimitMs: options.healthEventLoopP99LimitMs,
         }),
     );
 
-    return { baseUrl, stop: () => close(server) };
+    const graceMs = options.shutdownGraceMs ?? DEFAULT_SHUTDOWN_GRACE_MS;
+    return { baseUrl, stop: () => close(server, graceMs) };
 }
 
 /**
@@ -66,13 +80,19 @@ function listen(server: Server, port: number, host: string): Promise<void> {
 }
 
 /**
- * Graceful shutdown: stop accepting new connections, let in-flight
- * requests finish, then resolve. Idle keep-alive connections are closed
- * straight away (Node 19+), so this doesn't hang waiting on them.
+ * Graceful shutdown WITH A DEADLINE: stop accepting new connections and let
+ * in-flight requests finish, but only for `graceMs`. Some responses never
+ * finish on their own (a live SSE stream), and a shutdown that waits for
+ * them waits forever; after the grace period, remaining connections are cut.
+ * Idle keep-alive connections are closed straight away (Node 19+).
  */
-function close(server: Server): Promise<void> {
+function close(server: Server, graceMs: number): Promise<void> {
     return new Promise((resolve, reject) => {
+        const deadline = setTimeout(() => server.closeAllConnections(), graceMs);
+        deadline.unref(); // the timer alone must not keep the process alive
+
         server.close((error) => {
+            clearTimeout(deadline);
             if (error) reject(error);
             else resolve();
         });
