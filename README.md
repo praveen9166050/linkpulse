@@ -43,5 +43,5 @@
 
 ## Learning notes
 
-See [`docs/phases/`](docs/phases/) for notes from each phase and
-[`labs/`](labs/) for the CS fundamentals experiments.
+See [`docs/phases/`](docs/phases/) for notes from each phase, including the
+experiments run against LinkPulse itself to learn each CS fundamental.

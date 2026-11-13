@@ -9,7 +9,6 @@
 - [ ] Install AWS CLI, Node.js and Docker — AWS CLI and Node 26 done; Docker postponed
 - [ ] Run LocalStack and create a DynamoDB table locally (needs Docker)
 - [ ] Linting, formatting and pre-commit hooks working (`npm run check`, `pre-commit run --all-files`)
-- [ ] Lab 00: the event loop vs threads
 - [ ] ADR 0003: monolith first (you write it, from `docs/adr/0000-template.md`)
 - [ ] README written in your own words
 
@@ -35,7 +34,8 @@
 - **Databases:** what a DBMS does
 - **System design:** how to approach a design interview
 
-<!-- One paragraph each, after the lab. -->
+<!-- One paragraph each. The event loop is learned hands-on in Phase 1,
+     while building the API server: note what you measure there. -->
 
 ## Engineering standards this phase
 

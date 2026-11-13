@@ -30,7 +30,7 @@ Option 3:
 
 | Repo | Holds | Created in |
 | --- | --- | --- |
-| `linkpulse` | All backend services, infrastructure code, CI, docs, CS labs | Phase 0 |
+| `linkpulse` | All backend services, infrastructure code, CI, docs | Phase 0 |
 | `linkpulse-web` | Next.js dashboard | Phase 27 |
 | `linkpulse-gitops` | Kubernetes manifests watched by Argo CD | Phase 10.5 |
 

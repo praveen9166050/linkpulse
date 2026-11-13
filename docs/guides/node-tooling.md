@@ -25,7 +25,7 @@ passed, so it stops at the first failure.
 Run a TypeScript file directly, with no build step:
 
 ```powershell
-node labs/00-event-loop-vs-threads/server.ts
+node src/apps/api/main.ts
 ```
 
 ## npm install vs npm ci

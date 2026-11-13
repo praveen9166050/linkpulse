@@ -39,7 +39,7 @@ gh repo create linkpulse --public --description "..." --license mit --clone
 git status --short      # what changed. A = added, M = modified, D = deleted, ?? = untracked
 git add -A              # stage ALL changes (new, modified, deleted) for the next commit
 git add package.json    # or stage just one file
-git commit -m "feat: add lab 00"   # save the staged changes as a commit
+git commit -m "feat: add health endpoint"   # save the staged changes as a commit
 git push origin main    # upload new commits to GitHub's copy of main
 git log --oneline       # history, one line per commit
 ```

@@ -28,5 +28,5 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true
   },
-  "include": ["src", "test", "labs", "*.config.ts"]
+  "include": ["src", "test", "*.config.ts"]
 }

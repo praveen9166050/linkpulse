@@ -35,9 +35,6 @@ export default defineConfig(
     },
   },
 
-  // Labs are experiments: printing to the console is the point
-  { files: ["labs/**"], rules: { "no-console": "off" } },
-
   // Config files are plain JS, outside the TypeScript project
   { files: ["*.js"], ...tseslint.configs.disableTypeChecked },
 
