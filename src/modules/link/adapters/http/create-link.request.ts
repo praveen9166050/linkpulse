@@ -8,12 +8,12 @@ const KNOWN_FIELDS: ReadonlySet<string> = new Set(["url", "code", "expiresAt"]);
 type JsonObject = Readonly<Record<string, unknown>>;
 
 /**
- * Checks the SHAPE of a parsed JSON body (an object, with strings where
- * strings belong, and no unknown fields) and turns it into use-case input.
- * Whether the values MEAN something valid (a real URL, an allowed code)
- * is the domain's job, not this function's.
+ * REQUEST DTO: checks the SHAPE of a parsed JSON body (an object, with
+ * strings where strings belong, and no unknown fields) and turns it into
+ * use-case input. Whether the values MEAN something valid (a real URL, an
+ * allowed code) is the domain's job, not this function's.
  */
-export function parseCreateLinkBody(body: unknown): Result<CreateLinkInput, FieldError[]> {
+export function parseCreateLinkRequest(body: unknown): Result<CreateLinkInput, FieldError[]> {
     if (!isJsonObject(body)) {
         return err([field("(body)", "not_an_object", "The request body must be a JSON object.")]);
     }
