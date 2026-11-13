@@ -15,7 +15,9 @@
 import type { Request, Response } from "express";
 import { sendJson } from "#src/response-helper.ts";
 import type { CreateLinkDto } from "./dto/create-link.dto.ts";
+import { toLinkPageResponseDto } from "./dto/link-page-response.dto.ts";
 import { toLinkResponseDto } from "./dto/link-response.dto.ts";
+import { parseListLinksQuery } from "./dto/list-links.dto.ts";
 import type { LinksService } from "./links.service.ts";
 
 export interface LinksControllerDependencies {
@@ -23,7 +25,7 @@ export interface LinksControllerDependencies {
      * Only the methods the controller calls (Interface Segregation): the
      * real LinksService fits, and so does a two-method stand-in in tests.
      */
-    readonly linksService: Pick<LinksService, "createLink" | "followLink">;
+    readonly linksService: Pick<LinksService, "createLink" | "listLinks" | "followLink">;
     /** The address people use to reach LinkPulse, for building `shortUrl`. */
     readonly publicBaseUrl: string;
 }
@@ -51,6 +53,18 @@ export class LinksController {
     };
 
     /** GET: redirect a short code to its target. */
+    /**
+     * GET: one page of links, newest first.
+     *
+     * The query is parsed HERE, not by a middleware like validateBody: in
+     * Express 5 `req.query` is a read-only getter, so a middleware can't
+     * replace it with the parsed DTO the way validateBody replaces req.body.
+     */
+    readonly list = async (req: Request, res: Response): Promise<void> => {
+        const page = await this.#links.listLinks(parseListLinksQuery(req.query));
+        sendJson(res, 200, toLinkPageResponseDto(page, this.#publicBaseUrl));
+    };
+
     readonly follow = async (req: Request<{ code: string }>, res: Response): Promise<void> => {
         const target = await this.#links.followLink(req.params.code);
         // 302, not 301, and no-store: every click must reach us to be counted (ADR 0003).

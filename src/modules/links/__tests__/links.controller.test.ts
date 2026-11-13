@@ -29,6 +29,7 @@ const linksService = {
         createdFrom.push(dto);
         return Promise.resolve(link);
     },
+    listLinks: () => Promise.resolve({ links: [link], nextCursor: null }),
     followLink: () => Promise.resolve(target),
 };
 

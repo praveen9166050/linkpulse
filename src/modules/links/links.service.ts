@@ -8,6 +8,8 @@ import type { ClockService } from "#src/services/clock.service.ts";
 import { Link } from "./database/entities/link.entity.ts";
 import type { LinkRepository } from "./database/repositories/link.repository.ts";
 import type { CreateLinkDto } from "./dto/create-link.dto.ts";
+import type { ListLinksDto } from "./dto/list-links.dto.ts";
+import { decodeLinkCursor, encodeLinkCursor } from "./link-cursor.ts";
 import type { ShortCodeGeneratorService } from "./short-code-generator.service.ts";
 import { ShortCode } from "./short-code.value-object.ts";
 import { TargetUrl } from "./target-url.value-object.ts";
@@ -52,6 +54,40 @@ export class LinksService {
         return code
             ? this.#addWithCustomCode(code, target, createdAt)
             : this.#addWithGeneratedCode(target, createdAt);
+    }
+
+    /**
+     * One page of links, newest first, plus the cursor for the next page.
+     * @throws BadRequestError when the cursor isn't one this API produced
+     */
+    async listLinks(
+        query: ListLinksDto,
+    ): Promise<{ readonly links: readonly Link[]; readonly nextCursor: string | null }> {
+        const after = query.cursor === undefined ? undefined : decodeLinkCursor(query.cursor);
+        if (query.cursor !== undefined && !after) {
+            throw new BadRequestError("One or more query parameters are invalid.", {
+                errors: [
+                    {
+                        field: "cursor",
+                        kind: "invalid",
+                        message:
+                            "Not a cursor from this API: pass the nextCursor of a previous page.",
+                    },
+                ],
+            });
+        }
+
+        const page = await this.#deps.linkRepository.list(
+            after ? { limit: query.limit, after } : { limit: query.limit },
+        );
+        const last = page.links.at(-1);
+        return {
+            links: page.links,
+            nextCursor:
+                page.hasMore && last
+                    ? encodeLinkCursor({ createdAt: last.createdAt, code: last.code.value })
+                    : null,
+        };
     }
 
     /**

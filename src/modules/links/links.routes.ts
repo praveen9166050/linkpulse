@@ -17,6 +17,7 @@ export function linksRoutes(controller: LinksController): Router {
     // strict: `/abc/` (trailing slash) is not the code `abc`.
     const router = express.Router({ caseSensitive: true, strict: true });
 
+    router.get("/api/v1/links", controller.list);
     router.post("/api/v1/links", validateBody(parseCreateLinkDto), controller.create);
 
     // Registered after literal paths: `/:code` matches any single segment.

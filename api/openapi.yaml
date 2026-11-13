@@ -33,6 +33,40 @@ security: []
 
 paths:
     /api/v1/links:
+        get:
+            operationId: listLinks
+            tags: [Links]
+            summary: List links, newest first
+            description: |
+                One page of links, newest first. To get the next page, pass the
+                response's `nextCursor` back as `cursor`; `nextCursor` is `null` on the
+                last page. The cursor is opaque: clients must not build or edit it.
+                Pages stay stable while links are created (no duplicates, nothing
+                skipped), and every page costs the same, however deep.
+            parameters:
+                - name: limit
+                  in: query
+                  description: How many links per page.
+                  schema:
+                      type: integer
+                      minimum: 1
+                      maximum: 100
+                      default: 20
+                - name: cursor
+                  in: query
+                  description: The `nextCursor` of the previous page. Omit for the first page.
+                  schema:
+                      type: string
+            responses:
+                "200":
+                    description: One page of links.
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/LinkPage"
+                "400":
+                    $ref: "#/components/responses/InvalidQuery"
+
         post:
             operationId: createLink
             tags: [Links]
@@ -213,6 +247,26 @@ components:
                     format: date-time
                     description: When the link stops working, or `null` if never.
 
+        LinkPage:
+            type: object
+            required: [items, nextCursor]
+            properties:
+                items:
+                    type: array
+                    items:
+                        $ref: "#/components/schemas/Link"
+                nextCursor:
+                    type: ["string", "null"]
+                    description: Pass as `cursor` to get the next page; `null` on the last page.
+            example:
+                items:
+                    - code: aZ3kP9q
+                      shortUrl: http://localhost:3000/aZ3kP9q
+                      url: https://example.com/articles/2026/how-dns-works
+                      createdAt: "2026-11-14T09:30:00.000Z"
+                      expiresAt: null
+                nextCursor: eyJjcmVhdGVkQXQiOiIyMDI2LTExLTE0VDA5OjMwOjAwLjAwMFoiLCJjb2RlIjoiYVoza1A5cSJ9
+
         Health:
             type: object
             required: [status, database, eventLoopDelayMs, uptimeSeconds]
@@ -308,6 +362,26 @@ components:
                             - field: code
                               kind: reserved
                               message: '"api" is reserved and cannot be used as a short code.'
+
+        InvalidQuery:
+            description: |
+                A query parameter is invalid (`/problems/validation-error`, with one
+                `errors` entry per parameter): `limit` out of range, a `cursor` that
+                wasn't produced by this API, or an unknown parameter.
+            content:
+                application/problem+json:
+                    schema:
+                        $ref: "#/components/schemas/Problem"
+                    example:
+                        type: /problems/validation-error
+                        title: Invalid request
+                        status: 400
+                        detail: One or more query parameters are invalid.
+                        instance: /api/v1/links
+                        errors:
+                            - field: limit
+                              kind: out_of_range
+                              message: Must be a whole number from 1 to 100 (got "500").
 
         CodeTaken:
             description: The custom code is already in use.
