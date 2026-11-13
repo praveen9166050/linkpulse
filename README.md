@@ -34,8 +34,8 @@
 
 ## Project layout
 
-<!-- A short tree of the top-level folders and what each holds.
-     See docs/adr/0001-repo-structure.md. -->
+<!-- A short tree of the top-level folders (src/, test/) and what each holds.
+     See docs/guides/code-structure.md and docs/adr/0005-n8n-style-layout.md. -->
 
 ## Progress
 

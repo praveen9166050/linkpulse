@@ -1,6 +1,6 @@
 # 0001. Repository structure
 
-- **Status:** Accepted (folder names amended by [0002](0002-typescript-on-node.md))
+- **Status:** Accepted. The three-repo split still holds; the folder layout inside `linkpulse` is superseded by [0005](0005-n8n-style-layout.md)
 - **Date:** 2026-11-13
 
 ## Context

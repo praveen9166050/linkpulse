@@ -6,6 +6,7 @@ first appears.
 
 | Guide | Covers |
 | --- | --- |
+| [Code structure](code-structure.md) | Where each kind of code goes, import rules, naming, where tests go, checklist for adding a feature |
 | [Development environment](dev-environment.md) | Every installed tool, how it was installed, nvm, PATH |
 | [Node and TypeScript tooling](node-tooling.md) | npm scripts, `npm ci`, and every config file: `package.json`, `tsconfig.json`, ESLint, Prettier, Vitest |
 | [The API contract](api-contract.md) | OpenAPI: what the contract holds, its conventions, Redocly commands |
@@ -14,4 +15,5 @@ first appears.
 | [make](make.md) | General reference: what make is and how a Makefile works (not used by LinkPulse now) |
 
 Your own learning notes live in [`docs/phases/`](../phases/); decisions live
-in [`docs/adr/`](../adr/).
+in [`docs/adr/`](../adr/); the project's vocabulary is in the
+[glossary](../glossary.md).

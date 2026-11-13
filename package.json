@@ -8,9 +8,13 @@
     "engines": {
         "node": ">=26"
     },
+    "imports": {
+        "#src/*": "./src/*",
+        "#test/*": "./test/*"
+    },
     "scripts": {
-        "start": "node src/apps/api/main.ts",
-        "dev": "node --watch src/apps/api/main.ts",
+        "start": "node src/main.ts",
+        "dev": "node --watch src/main.ts",
         "typecheck": "tsc",
         "lint": "eslint .",
         "lint:fix": "eslint . --fix",
