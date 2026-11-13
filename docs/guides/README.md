@@ -8,6 +8,7 @@ first appears.
 | --- | --- |
 | [Development environment](dev-environment.md) | Every installed tool, how it was installed, nvm, PATH |
 | [Node and TypeScript tooling](node-tooling.md) | npm scripts, `npm ci`, and every config file: `package.json`, `tsconfig.json`, ESLint, Prettier, Vitest |
+| [The API contract](api-contract.md) | OpenAPI: what the contract holds, its conventions, Redocly commands |
 | [Git, GitHub and commits](git.md) | Every git and gh command used, conventional commits, rewriting history safely |
 | [Git hooks and pre-commit](pre-commit.md) | What hooks are, our pre-commit config line by line, everyday commands |
 | [make](make.md) | General reference: what make is and how a Makefile works (not used by LinkPulse now) |

@@ -9,7 +9,7 @@
 - [ ] Install AWS CLI, Node.js and Docker — AWS CLI and Node 26 done; Docker postponed
 - [ ] Run LocalStack and create a DynamoDB table locally (needs Docker)
 - [ ] Linting, formatting and pre-commit hooks working (`npm run check`, `pre-commit run --all-files`)
-- [ ] ADR 0003: monolith first (you write it, from `docs/adr/0000-template.md`)
+- [ ] ADR: monolith first (next free number, from `docs/adr/0000-template.md`)
 - [ ] README written in your own words
 
 ## Concepts — explain each in 2–3 sentences

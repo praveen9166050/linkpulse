@@ -1,0 +1,289 @@
+# The LinkPulse HTTP API contract. Written BEFORE the code (API-first):
+# the server must match it, and clients are generated from it.
+# Lint: npm run lint:api    Preview docs: npx redocly preview-docs api/openapi.yaml
+openapi: 3.1.0
+
+info:
+    title: LinkPulse API
+    version: 0.1.0
+    summary: Shorten URLs and redirect short links.
+    description: |
+        Management endpoints live under `/api/v1`. Redirects live at the root
+        (`/{code}`) so short links stay short.
+
+        Errors use RFC 9457 Problem Details (`application/problem+json`).
+    license:
+        name: MIT
+        identifier: MIT
+
+servers:
+    - url: http://localhost:3000
+      description: Local development
+
+tags:
+    - name: Links
+      description: Create short links.
+    - name: Redirects
+      description: Follow a short link to its target.
+    - name: Operations
+      description: Health checks for load balancers and monitoring.
+
+# No authentication until Phase 3 (Cognito). Stated explicitly so it is a decision, not an omission.
+security: []
+
+paths:
+    /api/v1/links:
+        post:
+            operationId: createLink
+            tags: [Links]
+            summary: Create a short link
+            description: |
+                Shortens `url`. Pass `code` to choose a custom short code; otherwise a
+                random 7-character code is generated. Pass `expiresAt` to make the link
+                stop working at that time.
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: "#/components/schemas/CreateLinkRequest"
+                        examples:
+                            generated:
+                                summary: Generated code
+                                value:
+                                    url: https://example.com/articles/2026/how-dns-works
+                            custom:
+                                summary: Custom code with expiry
+                                value:
+                                    url: https://example.com/cv.pdf
+                                    code: my-resume
+                                    expiresAt: "2027-01-31T23:59:59Z"
+            responses:
+                "201":
+                    description: The link was created.
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/Link"
+                "400":
+                    $ref: "#/components/responses/ValidationError"
+                "409":
+                    $ref: "#/components/responses/CodeTaken"
+
+    /{code}:
+        get:
+            operationId: followLink
+            tags: [Redirects]
+            summary: Follow a short link
+            description: |
+                Redirects to the link's target URL with **302 Found**, not 301: browsers
+                cache a 301 forever, so repeat clicks would never reach the server and
+                could not be counted. `Cache-Control: no-store` keeps proxies from caching
+                it too. See ADR 0003.
+            parameters:
+                - name: code
+                  in: path
+                  required: true
+                  description: The short code, for example `aZ3kP9q`.
+                  schema:
+                      $ref: "#/components/schemas/ShortCode"
+            responses:
+                "302":
+                    description: Redirect to the target URL.
+                    headers:
+                        Location:
+                            description: The target URL.
+                            schema:
+                                type: string
+                                format: uri
+                        Cache-Control:
+                            description: Always `no-store`, so every click reaches the server.
+                            schema:
+                                type: string
+                                const: no-store
+                "404":
+                    $ref: "#/components/responses/NotFound"
+
+    /health:
+        get:
+            operationId: getHealth
+            tags: [Operations]
+            summary: Check service health
+            description: |
+                Used by load balancers to decide whether to send traffic here. Reports
+                `degraded` with **503** when the event loop is lagging (CPU-bound work is
+                blocking it), so traffic moves to a healthy instance.
+            responses:
+                "200":
+                    description: The service is healthy.
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/Health"
+                "503":
+                    description: The service is overloaded; send traffic elsewhere.
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/Health"
+
+components:
+    schemas:
+        ShortCode:
+            type: string
+            description: |
+                3 to 32 letters, digits or hyphens. No hyphen at the start or end, no
+                two hyphens in a row, and not a reserved route name such as `api` or
+                `health` (checked by the server, case-insensitively). Case-sensitive.
+            minLength: 3
+            maxLength: 32
+            pattern: "^(?!-)(?!.*--)[A-Za-z0-9-]{3,32}(?<!-)$"
+            examples: [aZ3kP9q, my-resume]
+
+        CreateLinkRequest:
+            type: object
+            required: [url]
+            additionalProperties: false
+            properties:
+                url:
+                    type: string
+                    format: uri
+                    maxLength: 2048
+                    description: The long URL to shorten. Must be `http` or `https`.
+                    examples: [https://example.com/articles/2026/how-dns-works]
+                code:
+                    $ref: "#/components/schemas/ShortCode"
+                expiresAt:
+                    type: string
+                    format: date-time
+                    description: When the link stops working. Must be in the future.
+
+        Link:
+            type: object
+            required: [code, shortUrl, url, createdAt, expiresAt]
+            properties:
+                code:
+                    $ref: "#/components/schemas/ShortCode"
+                shortUrl:
+                    type: string
+                    format: uri
+                    description: The full short link to share.
+                    examples: [http://localhost:3000/aZ3kP9q]
+                url:
+                    type: string
+                    format: uri
+                    description: The target URL.
+                createdAt:
+                    type: string
+                    format: date-time
+                expiresAt:
+                    type: [string, "null"]
+                    format: date-time
+                    description: When the link stops working, or `null` if never.
+
+        Health:
+            type: object
+            required: [status, eventLoopDelayMs, uptimeSeconds]
+            properties:
+                status:
+                    type: string
+                    enum: [ok, degraded]
+                eventLoopDelayMs:
+                    type: object
+                    description: How long callbacks waited for the event loop, recently.
+                    required: [p50, p99]
+                    properties:
+                        p50:
+                            type: number
+                        p99:
+                            type: number
+                uptimeSeconds:
+                    type: number
+
+        Problem:
+            type: object
+            description: An error, in RFC 9457 Problem Details format.
+            required: [type, title, status]
+            properties:
+                type:
+                    type: string
+                    format: uri-reference
+                    description: Identifies the kind of problem. Stable; clients can switch on it.
+                    examples: [/problems/validation-error]
+                title:
+                    type: string
+                    description: A short, human-readable summary of the problem type.
+                status:
+                    type: integer
+                    description: The HTTP status code.
+                detail:
+                    type: string
+                    description: What went wrong in this occurrence.
+                instance:
+                    type: string
+                    format: uri-reference
+                    description: The request path that failed.
+                errors:
+                    type: array
+                    description: One entry per invalid field (validation errors only).
+                    items:
+                        $ref: "#/components/schemas/FieldError"
+
+        FieldError:
+            type: object
+            required: [field, kind, message]
+            properties:
+                field:
+                    type: string
+                    examples: [code]
+                kind:
+                    type: string
+                    description: Machine-readable reason, for example `too_short` or `reserved`.
+                    examples: [reserved]
+                message:
+                    type: string
+                    examples: ['"api" is reserved and cannot be used as a short code.']
+
+    responses:
+        ValidationError:
+            description: The request body is invalid.
+            content:
+                application/problem+json:
+                    schema:
+                        $ref: "#/components/schemas/Problem"
+                    example:
+                        type: /problems/validation-error
+                        title: Invalid request
+                        status: 400
+                        detail: One or more fields are invalid.
+                        instance: /api/v1/links
+                        errors:
+                            - field: code
+                              kind: reserved
+                              message: '"api" is reserved and cannot be used as a short code.'
+
+        CodeTaken:
+            description: The custom code is already in use.
+            content:
+                application/problem+json:
+                    schema:
+                        $ref: "#/components/schemas/Problem"
+                    example:
+                        type: /problems/code-taken
+                        title: Short code already taken
+                        status: 409
+                        detail: The code "my-resume" is already in use. Choose another.
+                        instance: /api/v1/links
+
+        NotFound:
+            description: No link with this code, or the link has expired.
+            content:
+                application/problem+json:
+                    schema:
+                        $ref: "#/components/schemas/Problem"
+                    example:
+                        type: /problems/link-not-found
+                        title: Link not found
+                        status: 404
+                        detail: No active link has the code "aZ3kP9q".
+                        instance: /aZ3kP9q

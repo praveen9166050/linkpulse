@@ -1,0 +1,7 @@
+# Redocly CLI config: lints the OpenAPI contract. Run: npm run lint:api
+apis:
+    linkpulse:
+        root: api/openapi.yaml
+
+extends:
+    - recommended

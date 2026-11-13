@@ -1,0 +1,13 @@
+# Redocly lint warnings deliberately ignored, one entry per occurrence.
+# Every entry needs a reason; new warnings elsewhere still fail review.
+# Regenerate: npx redocly lint --generate-ignore-file
+api/openapi.yaml:
+    # Only a local dev server exists until the first deploy (Phase 2).
+    no-server-example.com:
+        - "#/servers/0/url"
+    # A redirect's success response is 302, not 2xx.
+    operation-2xx-response:
+        - "#/paths/~1{code}/get/responses"
+    # The health check takes no client input, so it has no 4xx outcome.
+    operation-4xx-response:
+        - "#/paths/~1health/get/responses"

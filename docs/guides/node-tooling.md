@@ -10,11 +10,12 @@ Defined under `"scripts"` in `package.json`. Run any of them with `npm run <name
 | Command | Runs | Does |
 | --- | --- | --- |
 | `npm ci` | — | Install exactly what `package-lock.json` lists. Use after cloning or pulling |
-| `npm run check` | all four below | Everything CI will run. **Run before every push** |
+| `npm run check` | format:check, lint, lint:api, typecheck, test | Everything CI will run. **Run before every push** |
 | `npm run format:check` | `prettier --check .` | Is every file formatted? (changes nothing) |
 | `npm run format` | `prettier --write .` | Format every file |
 | `npm run lint` | `eslint .` | Lint problems? |
 | `npm run lint:fix` | `eslint . --fix` | Fix what can be fixed automatically |
+| `npm run lint:api` | `redocly lint` | Is the OpenAPI contract valid? (see [api-contract.md](api-contract.md)) |
 | `npm run typecheck` | `tsc` | Type errors? |
 | `npm test` | `vitest run --passWithNoTests` | Run all tests once |
 | `npm run test:watch` | `vitest` | Re-run tests on every save |
