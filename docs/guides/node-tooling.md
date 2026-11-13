@@ -10,8 +10,8 @@ Defined under `"scripts"` in `package.json`. Run any of them with `npm run <name
 | Command | Runs | Does |
 | --- | --- | --- |
 | `npm ci` | — | Install exactly what `package-lock.json` lists. Use after cloning or pulling |
-| `npm start` | `node src/apps/api/main.ts` | Run the API on port 3000 (`PORT` and `PUBLIC_BASE_URL` override). Ctrl+C shuts it down gracefully |
-| `npm run dev` | `node --watch src/apps/api/main.ts` | Same, but restarts automatically when a file changes |
+| `npm start` | `node src/main.ts` | Run the API on port 3000 (`PORT` and `PUBLIC_BASE_URL` override). Ctrl+C shuts it down gracefully |
+| `npm run dev` | `node --watch src/main.ts` | Same, but restarts automatically when a file changes |
 | `npm run check` | format:check, lint, lint:api, typecheck, test | Everything CI will run. **Run before every push** |
 | `npm run format:check` | `prettier --check .` | Is every file formatted? (changes nothing) |
 | `npm run format` | `prettier --write .` | Format every file |
@@ -28,7 +28,7 @@ passed, so it stops at the first failure.
 Run a TypeScript file directly, with no build step:
 
 ```powershell
-node src/apps/api/main.ts
+node src/main.ts
 ```
 
 ## Trying the API with curl
@@ -85,6 +85,7 @@ commit it.
 | `"private": true` | Never publish this to the npm registry by accident |
 | `"type": "module"` | `.js` files use ES modules (`import`/`export`), not CommonJS (`require`) |
 | `"engines": { "node": ">=26" }` | The Node version the code needs |
+| `"imports"` | **Subpath imports**: `#src/*` and `#test/*` map to `src/` and `test/`, so imports read `#src/errors/...` instead of long `../../..` paths (the plain-Node equivalent of n8n's `@/` alias). Understood by Node, TypeScript and Vitest (see [code-structure.md](code-structure.md)) |
 | `"scripts"` | The commands above |
 | `"devDependencies"` | Tools for development and CI, at exact versions |
 
@@ -139,7 +140,7 @@ Markdown is ignored, since Prettier would re-pad every hand-written table.
 
 ### `vitest.config.ts`
 
-Tests are files ending `.test.ts` in `src/` or `test/`. Coverage uses V8's
+As in n8n, unit tests live in a `__tests__/` folder inside the folder they test, and tests through real HTTP or a real database live in `test/integration/` (`*.api.test.ts`, `*.repository.test.ts`). Coverage uses V8's
 built-in coverage.
 
 ## Proving the checks work
