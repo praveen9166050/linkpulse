@@ -33,6 +33,13 @@ word for one of these, the code should change.
 | **Entity** | An object defined by its identity, not its data | `Link` (`link.entity.ts`) |
 | **Value object** | An immutable object defined only by its value, valid by construction | `ShortCode`, `TargetUrl` |
 | **Repository** | The class that stores and finds one kind of entity | `LinkRepository` |
+| **Document** | One record in MongoDB, stored as JSON-like data (BSON). One link is one document | `{ _id, target, createdAt }` |
+| **Collection** | A group of documents, like a table without a fixed schema | `links` |
+| **Schema** | The declared shape of a stored document, separate from the entity it holds | `link.schema.ts` |
+| **Connection pool** | A set of open database connections reused across requests, opened once at startup | `connectMongo` in `mongo.connection.ts` |
+| **Duplicate key (E11000)** | MongoDB rejecting an insert whose unique key already exists: how "code taken" is detected atomically | `isDuplicateKeyError` |
+| **Config** | The app's settings, read from the environment and validated at startup | `loadAppConfig` |
+| **Test database** | `linkpulse_test`: the only database tests write to, with one collection per test file | `test/shared/test-database.ts` |
 | **Domain error** | An error a value object or service throws when a business rule is broken, with a typed `reason` | `InvalidShortCodeError`, `InvalidTargetUrlError` |
 | **Response error** | An error that becomes an HTTP response with its status and Problem type | `ResponseError` and `BadRequestError` (400), `NotFoundError` (404), `ConflictError` (409), `ContentTooLargeError` (413) |
 | **Middleware** | A function every request passes through, in order | `express.json`, `notFound`, `errorHandler` |
