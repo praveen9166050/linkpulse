@@ -3,6 +3,7 @@
  * assembles the middleware chain and mounts the feature modules.
  */
 import express, { type Express } from "express";
+import type { Connection } from "mongoose";
 import { errorHandler } from "#src/middlewares/error-handler.ts";
 import { notFound } from "#src/middlewares/not-found.ts";
 import { LinkRepository } from "#src/modules/links/database/repositories/link.repository.ts";
@@ -13,12 +14,16 @@ import { ClockService } from "#src/services/clock.service.ts";
 /** Generous for a URL (2,048 characters) plus a code; small enough to stop abuse. */
 const MAX_BODY_BYTES = 16 * 1024;
 
-export interface AppConfig {
+export interface CreateAppOptions {
     /** The address people use to reach LinkPulse, for building short URLs. */
     readonly publicBaseUrl: string;
+    /** The app's shared MongoDB connection. */
+    readonly mongo: Connection;
+    /** Override the links collection (tests use one per test file). */
+    readonly linksCollection?: string | undefined;
 }
 
-export function createApp(config: AppConfig): Express {
+export function createApp(config: CreateAppOptions): Express {
     const app = express();
 
     // Don't advertise "X-Powered-By: Express": it tells attackers which
@@ -32,7 +37,9 @@ export function createApp(config: AppConfig): Express {
     // 2. Feature modules, each given its infrastructure.
     app.use(
         linksModule({
-            linkRepository: new LinkRepository(),
+            linkRepository: new LinkRepository(config.mongo, {
+                collection: config.linksCollection,
+            }),
             shortCodeGenerator: new ShortCodeGeneratorService(),
             clock: new ClockService(),
             publicBaseUrl: config.publicBaseUrl,

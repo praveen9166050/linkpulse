@@ -1,4 +1,5 @@
 import { createServer, type Server } from "node:http";
+import type { Connection } from "mongoose";
 import { createApp } from "./app.ts";
 
 export interface ServerOptions {
@@ -6,7 +7,11 @@ export interface ServerOptions {
     readonly port: number;
     readonly host?: string;
     /** The public address for short URLs. Defaults to the address the server listens on. */
-    readonly publicBaseUrl?: string;
+    readonly publicBaseUrl?: string | undefined;
+    /** The app's shared MongoDB connection, opened by the caller. */
+    readonly mongo: Connection;
+    /** Override the links collection (tests use one per test file). */
+    readonly linksCollection?: string;
 }
 
 export interface RunningServer {
@@ -33,7 +38,14 @@ export async function startServer(options: ServerOptions): Promise<RunningServer
 
     // An Express app is a plain node:http request listener, so the server,
     // listen() and graceful shutdown stay exactly as they were.
-    server.on("request", createApp({ publicBaseUrl: options.publicBaseUrl ?? baseUrl }));
+    server.on(
+        "request",
+        createApp({
+            publicBaseUrl: options.publicBaseUrl ?? baseUrl,
+            mongo: options.mongo,
+            linksCollection: options.linksCollection,
+        }),
+    );
 
     return { baseUrl, stop: () => close(server) };
 }

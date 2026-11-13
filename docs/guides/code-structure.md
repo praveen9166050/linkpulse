@@ -8,11 +8,15 @@ import which. The layout follows n8n: see
 
 ```
 src/
-├── main.ts                  entry point: read config, start, shut down gracefully
+├── main.ts                  entry point: config -> database -> HTTP; shuts down in reverse
 ├── server.ts                HTTP lifecycle: listen, stop
 ├── app.ts                   builds the Express app: creates infrastructure,
 │                            middleware chain, mounts feature modules
 ├── response-helper.ts       sendJson, sendProblem (RFC 9457 Problem Details)
+├── config/                  app.config.ts: reads and validates environment settings
+├── databases/               shared database code, used by every feature:
+│                            mongo.connection.ts (the pool), mongo-errors.ts
+├── commands/                scripts run with npm, not by the server: db-ping.ts
 ├── errors/                  error classes
 │   ├── <name>.error.ts          domain errors, e.g. invalid-short-code.error.ts
 │   └── response-errors/         errors that become HTTP responses:
@@ -31,14 +35,16 @@ src/
         ├── <name>.value-object.ts   self-validating values (short-code, target-url)
         ├── dto/                     request and response shapes
         ├── database/
-        │   ├── entities/            link.entity.ts
+        │   ├── entities/            link.entity.ts (the domain object),
+        │   │                        link.schema.ts (its stored shape)
         │   └── repositories/        link.repository.ts
         └── __tests__/               unit tests for this module
 test/
 ├── integration/             tests through real HTTP or a real database
 │   ├── <feature>.api.test.ts        API tests
 │   └── <entity>.repository.test.ts  repository tests
-└── shared/                  helpers used by any test
+└── shared/                  helpers used by any test, including
+                             test-database.ts (a private collection per test file)
 ```
 
 ## What goes where
@@ -51,6 +57,10 @@ test/
 | Turning a result into response JSON | `dto/<noun>-response.dto.ts` |
 | Reading HTTP, calling the service, writing the response | The controller (thin: no rules) |
 | Storing and finding an entity | `database/repositories/<entity>.repository.ts` |
+| How an entity is stored (fields, collection) | `database/entities/<entity>.schema.ts` |
+| Database code every feature shares (connecting, error checks) | `src/databases/` |
+| A new setting (environment variable) | `src/config/app.config.ts`, plus `.env.example` |
+| A script run with `npm run`, not by the server | `src/commands/<name>.ts` |
 | An expected failure the client should see | Throw a `ResponseError` subclass from `errors/response-errors/` |
 | A bug | Let it throw (a plain `Error`): the error handler logs it and answers 500 |
 
@@ -61,7 +71,10 @@ test/
 - **Express stays in the HTTP layer:** `app.ts`, `server.ts`,
   `middlewares/`, controllers and routes. Services, value objects,
   entities and repositories never import Express.
-- **Database drivers stay in repositories.**
+- **Database libraries stay in the database layer:** repositories,
+  schemas, `src/databases/` and the wiring in `main.ts`, `server.ts` and
+  `app.ts`. Services, value objects and entities never import Mongoose.
+- **Only `main.ts` opens the connection.** Everything else receives it.
 
 ## How to write an import
 
@@ -91,6 +104,8 @@ variables `camelCase`. Indentation is 4 spaces.
 | Service | `links.service.ts`, `clock.service.ts` | `LinksService`, `ClockService` |
 | Value object | `short-code.value-object.ts` | `ShortCode` |
 | Entity | `link.entity.ts` | `Link` |
+| Schema | `link.schema.ts` | `LinkDocument`, `linkModel` |
+| Config | `app.config.ts` | `AppConfig`, `loadAppConfig` |
 | Repository | `link.repository.ts` | `LinkRepository` |
 | DTO | `create-link.dto.ts`, `link-response.dto.ts` | `CreateLinkDto` + `parseCreateLinkDto`, `toLinkResponseDto` |
 | Error | `not-found.error.ts`, `invalid-short-code.error.ts` | `NotFoundError`, `InvalidShortCodeError` |
