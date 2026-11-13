@@ -39,6 +39,9 @@ word for one of these, the code should change.
 | **Connection pool** | A set of open database connections reused across requests, opened once at startup | `DatabaseConnection` in `mongo.connection.ts` |
 | **Duplicate key (E11000)** | MongoDB rejecting an insert whose unique key already exists: how "code taken" is detected atomically | `isDuplicateKeyError` |
 | **Config** | The app's settings, read from the environment and validated at startup | `loadAppConfig` |
+| **Keyset (cursor) pagination** | Paging by position ("links older than this one") instead of by count (`skip`). Every page costs the same and pages don't shift when data is added | `listQuery`, `GET /api/v1/links?cursor=` |
+| **Cursor** | An opaque token for where a page ended; clients pass it back unchanged | `link-cursor.ts` |
+| **Compound index** | One index on several fields, in a set order; it can serve a sort on those fields without sorting in memory | `{ createdAt: -1, _id: -1 }` in `link.schema.ts` |
 | **Health check** | An endpoint a load balancer calls to decide whether to send this instance traffic. Ours is a *readiness* check: 503 when MongoDB doesn't answer or the event loop lags | `GET /health`, `HealthService` |
 | **Event loop delay** | How late Node's single JavaScript thread runs scheduled work; high when CPU-bound code blocks it, so every request waits | `EventLoopDelayService` |
 | **Test database** | `linkpulse_test`: the only database tests write to, with one collection per test file | `test/shared/test-database.ts` |

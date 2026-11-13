@@ -33,6 +33,18 @@ const linkSchema = new Schema<LinkDocument>(
 );
 
 /**
+ * For listing newest first: the index is ALREADY in the order the list
+ * needs, so MongoDB walks it from the start (or from the cursor's position)
+ * and stops after `limit` entries. No sort in memory, no scan of the whole
+ * collection. `_id` breaks ties between links created in the same ms.
+ *
+ * Mongoose builds declared indexes when the model is first compiled
+ * (autoIndex). Fine for development; production systems usually create
+ * indexes deliberately, as a migration, because building one is heavy.
+ */
+linkSchema.index({ createdAt: -1, _id: -1 });
+
+/**
  * The Mongoose model for links in `collection`, on `connection`.
  * Reuses an already-compiled model, since Mongoose refuses to compile the
  * same model name twice on one connection.

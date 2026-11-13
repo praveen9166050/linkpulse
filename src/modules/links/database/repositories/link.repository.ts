@@ -7,6 +7,42 @@ import { linkModel, type LinkDocument } from "../entities/link.schema.ts";
 
 export type AddLinkOutcome = "added" | "code_taken";
 
+/** Where a page ended: the last link's createdAt, and its code to break ties. */
+export interface LinkPosition {
+    readonly createdAt: Date;
+    readonly code: string;
+}
+
+export interface LinkPage {
+    readonly links: readonly Link[];
+    /** True when at least one more link comes after this page. */
+    readonly hasMore: boolean;
+}
+
+/** Newest first; matches the { createdAt: -1, _id: -1 } index exactly. */
+const NEWEST_FIRST = { createdAt: -1, _id: -1 } as const;
+
+/**
+ * KEYSET PAGINATION: "the links older than this position", not "skip N".
+ *
+ *   createdAt < position.createdAt
+ *   OR (createdAt = position.createdAt AND _id < position.code)   <- ties
+ *
+ * The index seeks straight to the position, so page 1000 costs the same as
+ * page 1, and links created meanwhile can't shift the pages.
+ */
+export function listQuery(after?: LinkPosition) {
+    const filter = after
+        ? {
+              $or: [
+                  { createdAt: { $lt: after.createdAt } },
+                  { createdAt: after.createdAt, _id: { $lt: after.code } },
+              ],
+          }
+        : {};
+    return { filter, sort: NEWEST_FIRST };
+}
+
 export interface LinkRepositoryOptions {
     /** Override the collection name (tests use one collection per test file). */
     readonly collection?: string;
@@ -42,6 +78,33 @@ export class LinkRepository {
             if (isDuplicateKeyError(error)) return "code_taken";
             throw error;
         }
+    }
+
+    /**
+     * One page of links, newest first, after `after` (or from the newest).
+     * Asks for ONE extra document: if it comes back, there is another page.
+     */
+    async list(options: {
+        readonly limit: number;
+        readonly after?: LinkPosition;
+    }): Promise<LinkPage> {
+        const { filter, sort } = listQuery(options.after);
+        const documents = await this.#model
+            .find(filter)
+            .sort(sort)
+            .limit(options.limit + 1)
+            .lean<LinkDocument[]>()
+            .exec();
+
+        return {
+            links: documents.slice(0, options.limit).map(toLink),
+            hasMore: documents.length > options.limit,
+        };
+    }
+
+    /** Builds the schema's indexes now, if they don't exist yet (idempotent). */
+    async ensureIndexes(): Promise<void> {
+        await this.#model.createIndexes();
     }
 
     async findByCode(code: ShortCode): Promise<Link | undefined> {

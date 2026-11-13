@@ -98,6 +98,18 @@ Collection `links`, one document per link:
 - No `__v` field (Mongoose's version key is turned off: nothing uses it).
 - The shape is declared in `src/modules/links/database/entities/link.schema.ts`.
 
+### Indexes
+
+| Index | Serves |
+| --- | --- |
+| `_id` (built in, unique) | Find by code; the atomic "is this code free?" insert |
+| `{ createdAt: -1, _id: -1 }` | `GET /api/v1/links`: newest first, with keyset pagination |
+
+Mongoose builds declared indexes when the model is first used (`autoIndex`), which suits
+development. To check a query uses an index, run `explain()` on it: the plan should show
+`IXSCAN` (index scan), never `COLLSCAN` (reading the whole collection). The repository
+test does exactly that for the list query.
+
 To look at the data, use Atlas > Clusters > Browse Collections, or MongoDB
 Compass with the same connection string.
 
