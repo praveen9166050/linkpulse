@@ -1,32 +1,32 @@
 {
-  // TypeScript is used as a type checker only: `npm run typecheck`.
-  // Node 26 runs .ts files directly (it strips the types), and Lambda
-  // bundles will be built with esbuild from Phase 1.
-  "compilerOptions": {
-    // Language and modules
-    "target": "ES2024",
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
-    "types": ["node"],
+    // TypeScript is used as a type checker only: `npm run typecheck`.
+    // Node 26 runs .ts files directly (it strips the types), and Lambda
+    // bundles will be built with esbuild from Phase 1.
+    "compilerOptions": {
+        // Language and modules
+        "target": "ES2024",
+        "module": "NodeNext",
+        "moduleResolution": "NodeNext",
+        "types": ["node"],
 
-    // Keep code runnable by Node's built-in type stripping
-    "noEmit": true,
-    "allowImportingTsExtensions": true,
-    "erasableSyntaxOnly": true,
-    "verbatimModuleSyntax": true,
-    "isolatedModules": true,
+        // Keep code runnable by Node's built-in type stripping
+        "noEmit": true,
+        "allowImportingTsExtensions": true,
+        "erasableSyntaxOnly": true,
+        "verbatimModuleSyntax": true,
+        "isolatedModules": true,
 
-    // Strictness: catch bugs at compile time
-    "strict": true,
-    "noUncheckedIndexedAccess": true,
-    "noImplicitOverride": true,
-    "noImplicitReturns": true,
-    "noFallthroughCasesInSwitch": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
+        // Strictness: catch bugs at compile time
+        "strict": true,
+        "noUncheckedIndexedAccess": true,
+        "noImplicitOverride": true,
+        "noImplicitReturns": true,
+        "noFallthroughCasesInSwitch": true,
+        "noUnusedLocals": true,
+        "noUnusedParameters": true,
 
-    "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true
-  },
-  "include": ["src", "test", "*.config.ts"]
+        "skipLibCheck": true,
+        "forceConsistentCasingInFileNames": true
+    },
+    "include": ["src", "test", "*.config.ts"]
 }

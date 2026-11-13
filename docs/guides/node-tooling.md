@@ -101,8 +101,11 @@ ESLint's "flat config": a list of rule sets applied in order.
 
 ### `.prettierrc.json` and `.prettierignore`
 
-Prettier formats the code; nobody argues about style in reviews. Markdown is
-ignored, since Prettier would re-pad every hand-written table.
+Prettier formats the code; nobody argues about style in reviews. Settings:
+**4-space indentation** (`tabWidth`), lines up to 100 characters, and a
+trailing comma after the last item of multi-line lists (cleaner diffs when
+an item is added). `.editorconfig` sets the same 4 spaces for editors.
+Markdown is ignored, since Prettier would re-pad every hand-written table.
 
 ### `vitest.config.ts`
 

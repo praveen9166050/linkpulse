@@ -41,8 +41,8 @@ Hooks run on `git commit` unless they say otherwise. Without this, the file
 checks would also run again during the message check.
 
 ```yaml
-  - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
+    - repo: https://github.com/pre-commit/pre-commit-hooks
+      rev: v5.0.0
 ```
 A hook collection from GitHub, pinned to version `v5.0.0` so everyone runs
 identical checks. `pre-commit autoupdate` bumps the versions.
@@ -61,27 +61,27 @@ When a hook **fixes** a file, the commit still fails: review the fix,
 `git add` it and commit again.
 
 ```yaml
-  - repo: https://github.com/compilerla/conventional-pre-commit
-    rev: v4.0.0
-    hooks:
-      - id: conventional-pre-commit
-        stages: [commit-msg]
+    - repo: https://github.com/compilerla/conventional-pre-commit
+      rev: v4.0.0
+      hooks:
+          - id: conventional-pre-commit
+            stages: [commit-msg]
 ```
 Rejects messages that are not [conventional commits](git.md#conventional-commits).
 `stages: [commit-msg]` makes it check the message, not the files.
 
 ```yaml
-  - repo: local
-    hooks:
-      - id: eslint
-        entry: npx eslint --fix
-        language: system
-        types_or: [ts, javascript]
-      - id: typecheck
-        entry: npx tsc
-        language: system
-        pass_filenames: false
-        types: [ts]
+    - repo: local
+      hooks:
+          - id: eslint
+            entry: npx eslint --fix
+            language: system
+            types_or: [ts, javascript]
+          - id: typecheck
+            entry: npx tsc
+            language: system
+            pass_filenames: false
+            types: [ts]
 ```
 - `repo: local`: hooks defined right here rather than downloaded.
 - `entry`: the command to run. `npx` runs the version in this repo's

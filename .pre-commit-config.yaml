@@ -7,40 +7,40 @@
 default_stages: [pre-commit]
 
 repos:
-  - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
-    hooks:
-      - id: trailing-whitespace
-      - id: end-of-file-fixer
-      - id: check-yaml
-      - id: check-json
-        exclude: ^tsconfig.*\.json$ # tsconfig is JSONC (comments allowed); tsc validates it
-      - id: check-merge-conflict
-      - id: check-added-large-files
-      - id: detect-private-key # stop secrets before they reach GitHub
+    - repo: https://github.com/pre-commit/pre-commit-hooks
+      rev: v5.0.0
+      hooks:
+          - id: trailing-whitespace
+          - id: end-of-file-fixer
+          - id: check-yaml
+          - id: check-json
+            exclude: ^tsconfig.*\.json$ # tsconfig is JSONC (comments allowed); tsc validates it
+          - id: check-merge-conflict
+          - id: check-added-large-files
+          - id: detect-private-key # stop secrets before they reach GitHub
 
-  - repo: https://github.com/compilerla/conventional-pre-commit
-    rev: v4.0.0
-    hooks:
-      - id: conventional-pre-commit # commit messages must be feat:, fix:, docs: ...
-        stages: [commit-msg]
+    - repo: https://github.com/compilerla/conventional-pre-commit
+      rev: v4.0.0
+      hooks:
+          - id: conventional-pre-commit # commit messages must be feat:, fix:, docs: ...
+            stages: [commit-msg]
 
-  # Project tools, run from node_modules via npx
-  - repo: local
-    hooks:
-      - id: prettier
-        name: prettier
-        entry: npx prettier --write --ignore-unknown
-        language: system
-        types_or: [ts, javascript, json, yaml]
-      - id: eslint
-        name: eslint
-        entry: npx eslint --fix
-        language: system
-        types_or: [ts, javascript]
-      - id: typecheck
-        name: tsc (typecheck)
-        entry: npx tsc
-        language: system
-        pass_filenames: false
-        types: [ts]
+    # Project tools, run from node_modules via npx
+    - repo: local
+      hooks:
+          - id: prettier
+            name: prettier
+            entry: npx prettier --write --ignore-unknown
+            language: system
+            types_or: [ts, javascript, json, yaml]
+          - id: eslint
+            name: eslint
+            entry: npx eslint --fix
+            language: system
+            types_or: [ts, javascript]
+          - id: typecheck
+            name: tsc (typecheck)
+            entry: npx tsc
+            language: system
+            pass_filenames: false
+            types: [ts]
