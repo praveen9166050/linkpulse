@@ -8,6 +8,7 @@
 import type { Request, Response } from "express";
 import { describe, expect, it } from "vitest";
 import { Link } from "../database/entities/link.entity.ts";
+import type { CreateLinkDto } from "../dto/create-link.dto.ts";
 import { LinksController } from "../links.controller.ts";
 import { ShortCode } from "../short-code.value-object.ts";
 import { TargetUrl } from "../target-url.value-object.ts";
@@ -19,9 +20,15 @@ const link = Link.create({
     createdAt: new Date("2026-11-13T10:00:00.000Z"),
 });
 
+/** What the stand-in service was asked to create, to check what the controller passed. */
+const createdFrom: CreateLinkDto[] = [];
+
 /** Stands in for LinksService: the controller needs only these two methods. */
 const linksService = {
-    createLink: () => Promise.resolve(link),
+    createLink: (dto: CreateLinkDto) => {
+        createdFrom.push(dto);
+        return Promise.resolve(link);
+    },
     followLink: () => Promise.resolve(target),
 };
 
@@ -59,8 +66,20 @@ function recordingResponse() {
     return { res: res as unknown as Response, recorded };
 }
 
-function request(parts: { params?: Record<string, string>; body?: unknown }) {
-    return { params: {}, ...parts } as unknown as Request<{ code: string }>;
+/** A stand-in request for `follow`: only the route parameter matters. */
+function followRequest(code: string): Request<{ code: string }> {
+    return { params: { code } } as unknown as Request<{ code: string }>;
+}
+
+/** A stand-in request for `create`: the body is already a checked DTO (validateBody ran). */
+function createRequest(
+    body: CreateLinkDto,
+): Request<Record<string, never>, unknown, CreateLinkDto> {
+    return { params: {}, body } as unknown as Request<
+        Record<string, never>,
+        unknown,
+        CreateLinkDto
+    >;
 }
 
 describe("LinksController", () => {
@@ -68,7 +87,7 @@ describe("LinksController", () => {
         const { create } = controller(); // as Express holds it: a plain function
         const { res, recorded } = recordingResponse();
 
-        await create(request({ body: { url: "https://example.com/articles" } }), res);
+        await create(createRequest({ url: "https://example.com/articles" }), res);
 
         expect(recorded.status).toBe(201);
         expect(JSON.parse(recorded.body ?? "")).toEqual({
@@ -80,11 +99,20 @@ describe("LinksController", () => {
         });
     });
 
+    it("create passes the body to the service as is: validateBody already parsed it", async () => {
+        const { create } = controller();
+        const dto: CreateLinkDto = { url: "https://example.com/articles", code: "abc" };
+
+        await create(createRequest(dto), recordingResponse().res);
+
+        expect(createdFrom.at(-1)).toBe(dto); // the SAME object: no second parse in the controller
+    });
+
     it("follow redirects with 302 and no-store, even when called detached", async () => {
         const { follow } = controller();
         const { res, recorded } = recordingResponse();
 
-        await follow(request({ params: { code: "abc" } }), res);
+        await follow(followRequest("abc"), res);
 
         expect(recorded.redirect).toEqual({ status: 302, url: "https://example.com/articles" });
         expect(recorded.headers["cache-control"]).toBe("no-store");
