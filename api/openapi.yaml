@@ -69,6 +69,8 @@ paths:
                     $ref: "#/components/responses/ValidationError"
                 "409":
                     $ref: "#/components/responses/CodeTaken"
+                "413":
+                    $ref: "#/components/responses/BodyTooLarge"
 
     /{code}:
         get:
@@ -246,7 +248,10 @@ components:
 
     responses:
         ValidationError:
-            description: The request body is invalid.
+            description: |
+                The request body is invalid: not valid JSON (`/problems/invalid-json`), or
+                fields that are missing, of the wrong type, unknown or not allowed
+                (`/problems/validation-error`, with one `errors` entry per field).
             content:
                 application/problem+json:
                     schema:
@@ -273,6 +278,19 @@ components:
                         title: Short code already taken
                         status: 409
                         detail: The code "my-resume" is already in use. Choose another.
+                        instance: /api/v1/links
+
+        BodyTooLarge:
+            description: The request body is over the size limit (16 KiB).
+            content:
+                application/problem+json:
+                    schema:
+                        $ref: "#/components/schemas/Problem"
+                    example:
+                        type: /problems/body-too-large
+                        title: Request body too large
+                        status: 413
+                        detail: The body must be at most 16384 bytes.
                         instance: /api/v1/links
 
         NotFound:
