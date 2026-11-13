@@ -3,13 +3,15 @@
  * assembles the middleware chain and mounts the feature modules.
  */
 import express, { type Express } from "express";
-import type { Connection } from "mongoose";
+import type { DatabaseConnection } from "#src/databases/mongo.connection.ts";
 import { errorHandler } from "#src/middlewares/error-handler.ts";
 import { notFound } from "#src/middlewares/not-found.ts";
+import { healthModule } from "#src/modules/health/health.module.ts";
 import { LinkRepository } from "#src/modules/links/database/repositories/link.repository.ts";
 import { linksModule } from "#src/modules/links/links.module.ts";
 import { ShortCodeGeneratorService } from "#src/modules/links/short-code-generator.service.ts";
 import { ClockService } from "#src/services/clock.service.ts";
+import { EventLoopDelayService } from "#src/services/event-loop-delay.service.ts";
 
 /** Generous for a URL (2,048 characters) plus a code; small enough to stop abuse. */
 const MAX_BODY_BYTES = 16 * 1024;
@@ -17,8 +19,8 @@ const MAX_BODY_BYTES = 16 * 1024;
 export interface CreateAppOptions {
     /** The address people use to reach LinkPulse, for building short URLs. */
     readonly publicBaseUrl: string;
-    /** The app's shared MongoDB connection. */
-    readonly mongo: Connection;
+    /** The app's one database connection (its pool), opened by main.ts. */
+    readonly database: DatabaseConnection;
     /** Override the links collection (tests use one per test file). */
     readonly linksCollection?: string | undefined;
 }
@@ -34,10 +36,19 @@ export function createApp(config: CreateAppOptions): Express {
     // 1. Parse JSON bodies (only when Content-Type is JSON), with a size limit.
     app.use(express.json({ limit: MAX_BODY_BYTES }));
 
-    // 2. Feature modules, each given its infrastructure.
+    // 2. Feature modules, each given its infrastructure. ORDER MATTERS here
+    //    too: health first, because links' `GET /:code` matches any single
+    //    path segment, including "/health".
+    app.use(
+        healthModule({
+            database: config.database,
+            eventLoopDelay: new EventLoopDelayService(),
+            uptimeSeconds: () => process.uptime(),
+        }),
+    );
     app.use(
         linksModule({
-            linkRepository: new LinkRepository(config.mongo, {
+            linkRepository: new LinkRepository(config.database.connection, {
                 collection: config.linksCollection,
             }),
             shortCodeGenerator: new ShortCodeGeneratorService(),

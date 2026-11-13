@@ -15,7 +15,7 @@ describe("HTTP hardening", () => {
         database = await connectTestDatabase();
         server = await startServer({
             port: 0,
-            mongo: database.connection,
+            database: database.databaseConnection,
             linksCollection: database.linksCollection,
         });
     });

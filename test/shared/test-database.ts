@@ -15,6 +15,9 @@ import { DatabaseConnection } from "#src/databases/mongo.connection.ts";
 export const TEST_DATABASE = "linkpulse_test";
 
 export interface TestDatabase {
+    /** The DatabaseConnection, for startServer({ database }). */
+    readonly databaseConnection: DatabaseConnection;
+    /** Its Mongoose connection, for repositories and direct queries. */
     readonly connection: Connection;
     /** This test file's private collection for links. */
     readonly linksCollection: string;
@@ -32,6 +35,7 @@ export async function connectTestDatabase(): Promise<TestDatabase> {
     const linksCollection = `links_test_${randomUUID().slice(0, 8)}`;
 
     return {
+        databaseConnection: database,
         connection,
         linksCollection,
         async clear() {

@@ -1,5 +1,5 @@
 import { createServer, type Server } from "node:http";
-import type { Connection } from "mongoose";
+import type { DatabaseConnection } from "#src/databases/mongo.connection.ts";
 import { createApp } from "./app.ts";
 
 export interface ServerOptions {
@@ -8,8 +8,8 @@ export interface ServerOptions {
     readonly host?: string;
     /** The public address for short URLs. Defaults to the address the server listens on. */
     readonly publicBaseUrl?: string | undefined;
-    /** The app's shared MongoDB connection, opened by the caller. */
-    readonly mongo: Connection;
+    /** The app's one database connection, opened by the caller. */
+    readonly database: DatabaseConnection;
     /** Override the links collection (tests use one per test file). */
     readonly linksCollection?: string;
 }
@@ -42,7 +42,7 @@ export async function startServer(options: ServerOptions): Promise<RunningServer
         "request",
         createApp({
             publicBaseUrl: options.publicBaseUrl ?? baseUrl,
-            mongo: options.mongo,
+            database: options.database,
             linksCollection: options.linksCollection,
         }),
     );

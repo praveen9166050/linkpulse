@@ -24,7 +24,7 @@ try {
     const server = await startServer({
         port: config.port,
         publicBaseUrl: config.publicBaseUrl,
-        mongo: database.connection,
+        database,
     });
     process.stdout.write(`LinkPulse API listening on ${server.baseUrl}\n`);
 

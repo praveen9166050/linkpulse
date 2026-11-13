@@ -24,7 +24,7 @@ describe("shorten a URL, then follow the short link", () => {
         // Port 0 asks the OS for any free port, so tests never clash.
         server = await startServer({
             port: 0,
-            mongo: database.connection,
+            database: database.databaseConnection,
             linksCollection: database.linksCollection,
         });
     });

@@ -24,9 +24,12 @@ src/
 │                                conflict, content-too-large (.error.ts)
 ├── middlewares/             app-wide: error-handler.ts, not-found.ts;
 │                            per route: validate-body.ts (plain names)
-├── services/                services shared by every feature: clock.service.ts
+├── services/                services shared by every feature: clock.service.ts,
+│                            event-loop-delay.service.ts
 │   └── __tests__/
 └── modules/                 ONE FOLDER PER FEATURE
+    ├── health/                  GET /health: database ping + event-loop delay
+    │                            (mounted BEFORE links: `/:code` would catch "/health")
     └── links/
         ├── links.module.ts          builds the service and controller, returns a Router
         ├── links.controller.ts      request -> service -> response

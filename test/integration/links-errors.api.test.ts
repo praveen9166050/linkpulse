@@ -14,7 +14,7 @@ describe("creating and following links: the error paths", () => {
         database = await connectTestDatabase();
         server = await startServer({
             port: 0,
-            mongo: database.connection,
+            database: database.databaseConnection,
             linksCollection: database.linksCollection,
         });
     });
