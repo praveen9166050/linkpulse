@@ -22,11 +22,13 @@ servers:
 
 tags:
     - name: Links
-      description: Create short links.
+      description: Create and list short links.
     - name: Redirects
       description: Follow a short link to its target.
     - name: Operations
       description: Health checks for load balancers and monitoring.
+    - name: Development
+      description: Tools for local development only, switched on with DEV_TOOLS=true.
 
 # No authentication until Phase 3 (Cognito). Stated explicitly so it is a decision, not an omission.
 security: []
@@ -105,6 +107,37 @@ paths:
                     $ref: "#/components/responses/CodeTaken"
                 "413":
                     $ref: "#/components/responses/BodyTooLarge"
+
+    /api/v1/dev/requests:
+        get:
+            operationId: streamRequests
+            tags: [Development]
+            summary: Live request log (development only)
+            description: |
+                **Exists only when the API runs with `DEV_TOOLS=true`; otherwise 404.**
+                Never enable in production: it exposes every request path.
+
+                A Server-Sent Events stream that never ends. It first replays the most
+                recent requests (up to 50), then sends one event per request as the
+                API handles it:
+
+                ```
+                id: 42
+                event: request
+                data: {"id":42,"at":"2026-11-14T10:00:00.000Z","method":"GET","path":"/health","status":200,"durationMs":3.21}
+                ```
+
+                Comment lines (`: heartbeat`) keep the connection alive every 15 s. A
+                client that reads too slowly misses events rather than slowing the API.
+            responses:
+                "200":
+                    description: The event stream. Each event's `data` is a `RequestLogEntry`.
+                    content:
+                        text/event-stream:
+                            schema:
+                                type: string
+                "404":
+                    $ref: "#/components/responses/NotFound"
 
     /{code}:
         get:
@@ -266,6 +299,28 @@ components:
                       createdAt: "2026-11-14T09:30:00.000Z"
                       expiresAt: null
                 nextCursor: eyJjcmVhdGVkQXQiOiIyMDI2LTExLTE0VDA5OjMwOjAwLjAwMFoiLCJjb2RlIjoiYVoza1A5cSJ9
+
+        RequestLogEntry:
+            type: object
+            description: One handled request, as sent in the live request log.
+            required: [id, at, method, path, status, durationMs]
+            properties:
+                id:
+                    type: integer
+                    description: Increasing number; also the SSE event id.
+                at:
+                    type: string
+                    format: date-time
+                    description: When the response finished.
+                method:
+                    type: string
+                path:
+                    type: string
+                    description: The path, without the query string.
+                status:
+                    type: integer
+                durationMs:
+                    type: number
 
         Health:
             type: object

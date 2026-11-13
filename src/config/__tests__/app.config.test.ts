@@ -21,6 +21,8 @@ describe("parseAppConfig", () => {
             port: 3000,
             publicBaseUrl: undefined,
             mongodb: { uri: VALID.MONGODB_URI, database: "linkpulse_dev" },
+            corsOrigins: [], // no cross-origin access unless listed
+            devTools: false, // dev-only endpoints off unless asked for
         });
     });
 
@@ -70,5 +72,47 @@ describe("parseAppConfig", () => {
         expect(problemsWith({ ...VALID, PUBLIC_BASE_URL: "ftp://lnkp.dev" })).toEqual([
             'PUBLIC_BASE_URL must be an http or https URL (got "ftp://lnkp.dev")',
         ]);
+    });
+
+    describe("CORS_ORIGINS", () => {
+        it("reads a comma-separated list of origins, ignoring spaces and empty entries", () => {
+            const config = parseAppConfig({
+                ...VALID,
+                CORS_ORIGINS: "http://localhost:3001, https://dash.example.com,",
+            });
+
+            expect(config.corsOrigins).toEqual([
+                "http://localhost:3001",
+                "https://dash.example.com",
+            ]);
+        });
+
+        it.each([
+            ["a path", "http://localhost:3001/app"],
+            ["a trailing slash", "http://localhost:3001/"],
+            ["not a URL", "localhost:3001"],
+            ["the * wildcard", "*"],
+            ["another scheme", "ftp://files.example.com"],
+        ])("rejects an origin with %s", (_label, origin) => {
+            expect(problemsWith({ ...VALID, CORS_ORIGINS: origin })).toEqual([
+                `CORS_ORIGINS entries must be origins like http://localhost:3001 (got "${origin}")`,
+            ]);
+        });
+    });
+
+    describe("DEV_TOOLS", () => {
+        it.each([
+            ["true", true],
+            ["false", false],
+            ["", false],
+        ])("reads %j as %s", (value, expected) => {
+            expect(parseAppConfig({ ...VALID, DEV_TOOLS: value }).devTools).toBe(expected);
+        });
+
+        it("rejects anything but true or false, so a typo can't switch it on", () => {
+            expect(problemsWith({ ...VALID, DEV_TOOLS: "yes" })).toEqual([
+                'DEV_TOOLS must be "true" or "false" (got "yes")',
+            ]);
+        });
     });
 });

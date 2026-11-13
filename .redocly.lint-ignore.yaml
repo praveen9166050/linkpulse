@@ -11,3 +11,8 @@ api/openapi.yaml:
     # The health check takes no client input, so it has no 4xx outcome.
     operation-4xx-response:
         - "#/paths/~1health/get/responses"
+    # Describes each live-log event's `data`. OpenAPI 3.1 can't type the events inside
+    # a text/event-stream body (3.2's itemSchema can), so nothing $refs it; the
+    # dashboard's generated client uses it.
+    no-unused-components:
+        - "#/components/schemas/RequestLogEntry"
