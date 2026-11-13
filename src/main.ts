@@ -1,29 +1,47 @@
 /**
- * Entry point: `npm start`. Reads configuration from the environment,
- * starts the API, and shuts down gracefully on Ctrl+C (SIGINT) or when a
- * platform such as Kubernetes asks it to stop (SIGTERM).
+ * Entry point: `npm start`.
+ *
+ * STARTUP, dependencies first:   config -> database -> HTTP server
+ * SHUTDOWN, in reverse:          HTTP server (finish open requests) -> database
+ *
+ * Starting the server only once the database is reachable means no request
+ * is accepted that couldn't be served. Closing the database only after the
+ * server has drained means no in-flight request loses its connection.
  */
-import { startServer } from "./server.ts";
+import { loadAppConfig } from "#src/config/app.config.ts";
+import { connectMongo } from "#src/databases/mongo.connection.ts";
+import { startServer } from "#src/server.ts";
 
-const DEFAULT_PORT = 3000;
+try {
+    const config = loadAppConfig();
 
-const port = parsePort(process.env.PORT);
-const server = await startServer({ port, publicBaseUrl: process.env.PUBLIC_BASE_URL });
+    const mongo = await connectMongo(config.mongodb);
+    process.stdout.write(`Connected to MongoDB database "${config.mongodb.database}"\n`);
 
-process.stdout.write(`LinkPulse API listening on ${server.baseUrl}\n`);
-
-for (const signal of ["SIGINT", "SIGTERM"] as const) {
-    process.once(signal, () => {
-        process.stdout.write(`${signal} received, finishing open requests...\n`);
-        void server.stop().then(() => process.exit(0));
+    const server = await startServer({
+        port: config.port,
+        publicBaseUrl: config.publicBaseUrl,
+        mongo,
     });
-}
+    process.stdout.write(`LinkPulse API listening on ${server.baseUrl}\n`);
 
-function parsePort(value: string | undefined): number {
-    if (value === undefined) return DEFAULT_PORT;
-    const port = Number(value);
-    if (!Number.isInteger(port) || port < 0 || port > 65_535) {
-        throw new Error(`PORT must be a whole number from 0 to 65535, got "${value}"`);
+    // Ctrl+C sends SIGINT; platforms such as Kubernetes send SIGTERM to stop a process.
+    for (const signal of ["SIGINT", "SIGTERM"] as const) {
+        process.once(signal, () => {
+            process.stdout.write(`${signal} received: finishing open requests...\n`);
+            void server
+                .stop()
+                .then(() => mongo.close())
+                .then(() => {
+                    process.stdout.write("Shut down cleanly.\n");
+                    process.exit(0);
+                });
+        });
     }
-    return port;
+} catch (error) {
+    // A clear one-line reason (bad config, unreachable database), not a stack trace.
+    process.stderr.write(
+        `LinkPulse failed to start: ${error instanceof Error ? error.message : String(error)}\n`,
+    );
+    process.exitCode = 1;
 }

@@ -4,16 +4,24 @@
  */
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { startServer, type RunningServer } from "../../src/server.ts";
+import { connectTestDatabase, type TestDatabase } from "#test/shared/test-database.ts";
 
 describe("creating and following links: the error paths", () => {
+    let database: TestDatabase;
     let server: RunningServer;
 
     beforeAll(async () => {
-        server = await startServer({ port: 0 });
+        database = await connectTestDatabase();
+        server = await startServer({
+            port: 0,
+            mongo: database.connection,
+            linksCollection: database.linksCollection,
+        });
     });
 
     afterAll(async () => {
         await server.stop();
+        await database.dispose();
     });
 
     function post(body: string): Promise<Response> {

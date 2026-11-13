@@ -1,7 +1,8 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { BadRequestError } from "#src/errors/response-errors/bad-request.error.ts";
 import { ConflictError } from "#src/errors/response-errors/conflict.error.ts";
 import { NotFoundError } from "#src/errors/response-errors/not-found.error.ts";
+import { connectTestDatabase, type TestDatabase } from "#test/shared/test-database.ts";
 import { fixedClock, scriptedRandom } from "#test/shared/test-doubles.ts";
 import { rejectionOf } from "#test/shared/thrown.ts";
 import { LinkRepository } from "../database/repositories/link.repository.ts";
@@ -12,10 +13,22 @@ import { ShortCode } from "../short-code.value-object.ts";
 const NOW = new Date("2026-11-13T10:00:00Z");
 
 describe("LinksService", () => {
+    let database: TestDatabase;
     let linkRepository: LinkRepository;
 
-    beforeEach(() => {
-        linkRepository = new LinkRepository();
+    beforeAll(async () => {
+        database = await connectTestDatabase();
+        linkRepository = new LinkRepository(database.connection, {
+            collection: database.linksCollection,
+        });
+    });
+
+    beforeEach(async () => {
+        await database.clear();
+    });
+
+    afterAll(async () => {
+        await database.dispose();
     });
 
     /** A service whose generator will produce exactly `codes`, in order (none by default). */
