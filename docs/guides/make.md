@@ -1,5 +1,11 @@
 # make
 
+> **LinkPulse uses npm scripts now, not make** (see
+> [node-tooling.md](node-tooling.md) and [ADR 0002](../adr/0002-typescript-on-node.md)).
+> This guide stays as general reference: you will meet Makefiles in many
+> repos, especially Go, C and infrastructure projects. The example Makefile
+> below is the one LinkPulse used while it was planned in Go.
+
 ## What it is
 
 **make** is a program that reads a file called `Makefile` and runs the
@@ -63,7 +69,7 @@ date and does nothing.
 A **phony target** is just a name, not a file. Listing it under `.PHONY`
 tells make to always run it, even if a file called `test` happens to exist.
 
-## Our Makefile, line by line
+## Example: a Go project's Makefile, line by line
 
 ```make
 .DEFAULT_GOAL := help

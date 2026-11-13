@@ -38,7 +38,7 @@ gh repo create linkpulse --public --description "..." --license mit --clone
 ```powershell
 git status --short      # what changed. A = added, M = modified, D = deleted, ?? = untracked
 git add -A              # stage ALL changes (new, modified, deleted) for the next commit
-git add Makefile        # or stage just one file
+git add package.json    # or stage just one file
 git commit -m "feat: add lab 00"   # save the staged changes as a commit
 git push origin main    # upload new commits to GitHub's copy of main
 git log --oneline       # history, one line per commit
@@ -91,7 +91,7 @@ type(optional scope): short description in the imperative
 | `test` | Adding or fixing tests | `test(link): cover code collisions` |
 | `refactor` | Code change with no behaviour change | `refactor: extract code generator` |
 | `perf` | Performance | `perf(redirect): cache popular links` |
-| `build` | Build system, tooling, dependencies | `build: add golangci-lint config` |
+| `build` | Build system, tooling, dependencies | `build: add eslint config` |
 | `ci` | CI pipelines | `ci: run tests on pull requests` |
 | `chore` | Anything else (maintenance) | `chore: scaffold repo layout` |
 

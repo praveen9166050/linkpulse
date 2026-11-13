@@ -10,20 +10,62 @@ there, and the exact commands used.
 | Git | pre-installed | Version control | (already there) |
 | GitHub CLI (`gh`) | pre-installed | Create repos, PRs and issues from the terminal | (already there) |
 | AWS CLI (`aws`) | pre-installed | Talk to AWS from the terminal | (already there) |
-| Node.js | pre-installed | Frontend tooling (Phase 27) | (already there) |
+| nvm for Windows | 1.2.2 | Install and switch between Node versions | (already there) |
+| Node.js | 26.13.1 (LTS) | Runs LinkPulse; ships with npm | `nvm` |
 | Python | 3.13.7 | Needed by `pre-commit` | (already there) |
-| Go | 1.27.4 | The language LinkPulse is written in | `winget` |
-| golangci-lint | 2.15.0 | Runs many Go linters at once | `winget` |
-| GNU Make | 4.4.1 | Runs the project's named commands (see [make.md](make.md)) | `winget` |
 | pre-commit | 4.7.0 | Runs checks automatically on `git commit` (see [pre-commit.md](pre-commit.md)) | `pip` |
+| GNU Make | 4.4.1 | Not used by LinkPulse now (see [make.md](make.md)) | `winget` |
+| Go, golangci-lint | 1.27.4, 2.15.0 | Not used now; kept for the Phase 24 rewrite (see [ADR 0002](../adr/0002-typescript-on-node.md)) | `winget` |
 | Docker | — | Containers, LocalStack | Postponed |
+
+Project tools (TypeScript, ESLint, Prettier, Vitest) are **not** installed
+globally. They live in the repo's `node_modules/`, pinned in
+`package.json`; see [node-tooling.md](node-tooling.md).
 
 Check any tool is installed and see where it lives:
 
 ```powershell
-go version              # prints the version
-Get-Command go          # shows the full path of the go.exe that runs (like `which` on Linux)
+node --version          # prints the version
+Get-Command node        # the full path of the node.exe that runs (like `which` on Linux)
 ```
+
+## nvm: switching Node versions
+
+**nvm** (Node Version Manager) keeps several Node versions side by side and
+switches between them. Different projects can need different versions.
+
+```powershell
+nvm list                # installed versions; * marks the one in use
+nvm install 26.13.1     # download a version (others are untouched)
+nvm use 26.13.1         # switch to it   ← run in an ADMIN terminal
+nvm root                # where versions are stored
+```
+
+How it works: PATH contains `C:\nvm4w\nodejs`, a **link** that points to
+one version's folder, such as `C:\Users\Admin\AppData\Local\nvm\v26.13.1`.
+`nvm use` deletes the link and recreates it pointing at another version.
+
+**Run `nvm use` in an admin terminal** (right-click PowerShell → Run as
+administrator). Creating a symbolic link needs admin rights on Windows. In a
+normal terminal, nvm deletes the old link, fails to create the new one, and
+`node` stops working everywhere.
+
+If that happens, recreate the link as a **directory junction**, which works
+like a folder link and needs no admin rights:
+
+```powershell
+New-Item -ItemType Junction -Path C:\nvm4w\nodejs -Target C:\Users\Admin\AppData\Local\nvm\v26.13.1
+```
+
+The repo's `.nvmrc` file records the Node version the project expects. CI
+reads it to install the same version.
+
+### LTS vs Current
+
+Node ships a new major version every six months. **Even** versions (22, 24,
+26) become **LTS** (Long-Term Support) each October and get about three years
+of fixes. Odd versions are short-lived. Use the newest LTS for anything real;
+AWS Lambda only offers LTS runtimes.
 
 ## winget: the Windows package manager
 
@@ -32,29 +74,24 @@ central catalogue and checks each installer's hash (a fingerprint) so you
 know the download was not tampered with. That is the
 "Successfully verified installer hash" line you see during an install.
 
-The command used for Go:
-
 ```powershell
-winget install --id GoLang.Go -e --accept-source-agreements --accept-package-agreements --silent
+winget install --id GolangCI.golangci-lint -e --accept-source-agreements --accept-package-agreements --silent
 ```
 
 | Part | Meaning |
 | --- | --- |
 | `winget install` | Install a package |
-| `--id GoLang.Go` | The package's unique ID in the catalogue |
+| `--id GolangCI.golangci-lint` | The package's unique ID in the catalogue |
 | `-e` | **Exact** match on that ID, so nothing with a similar name is picked |
 | `--accept-source-agreements` | Accept the catalogue's terms without a prompt |
 | `--accept-package-agreements` | Accept the package's licence without a prompt |
 | `--silent` | Run the installer with no windows or questions |
 
-The same pattern installed `GolangCI.golangci-lint` and `ezwinports.make`.
-
 Other useful winget commands:
 
 ```powershell
-winget search golang            # find a package ID
+winget search nodejs            # find a package ID
 winget list                     # everything installed
-winget upgrade --id GoLang.Go   # update one package
 winget upgrade --all            # update everything
 ```
 
@@ -77,8 +114,8 @@ PATH (it already was).
 
 ## PATH: how Windows finds commands
 
-When you type `go`, Windows searches a list of folders, the **PATH**, for
-`go.exe`. Installers add their folder to it. There are two parts:
+When you type `node`, Windows searches a list of folders, the **PATH**, for
+`node.exe`. Installers add their folder to it. There are two parts:
 
 - **Machine PATH:** for all users (needs admin to change).
 - **User PATH:** just for you.
@@ -95,58 +132,6 @@ $env:Path = [Environment]::GetEnvironmentVariable('Path','Machine') + ';' + [Env
 This reads the saved Machine and User PATH values and joins them with `;`
 (the separator on Windows) into the current window's `$env:Path`.
 
-## The Go toolchain
-
-```powershell
-go version          # go version go1.27.4 windows/amd64
-go env GOROOT GOPATH GOOS GOARCH
-```
-
-| Setting | Value here | Meaning |
-| --- | --- | --- |
-| `GOROOT` | `C:\Program Files\Go` | Where Go itself lives: compiler, standard library, tools |
-| `GOPATH` | `C:\Users\Admin\go` | Cache of downloaded dependencies (`pkg\mod`) and tools you install (`bin`) |
-| `GOOS` / `GOARCH` | `windows` / `amd64` | The platform Go builds for by default. Set `GOOS=linux GOARCH=arm64` to build for AWS Lambda from this machine (cross-compiling) |
-
-The commands you will use every day:
-
-| Command | Does |
-| --- | --- |
-| `go run .` | Compile and run the package in this folder, without keeping a binary |
-| `go build ./...` | Compile every package; reports errors |
-| `go test ./...` | Run every test |
-| `go vet ./...` | Report suspicious code that still compiles |
-| `go mod tidy` | Add missing and remove unused dependencies in `go.mod` / `go.sum` |
-| `go doc fmt.Println` | Show documentation for anything |
-
-`./...` means "this folder and every folder below it".
-
-## Go modules
-
-A **module** is a project with its own list of dependencies. It is created
-once:
-
-```powershell
-go mod init github.com/praveen9166050/linkpulse
-```
-
-That writes `go.mod`:
-
-```text
-module github.com/praveen9166050/linkpulse
-
-go 1.27.4
-```
-
-- **`module`** is the module path. It is the prefix of every import inside
-  the project (for example `github.com/praveen9166050/linkpulse/internal/link`)
-  and, by convention, where the code lives on GitHub.
-- **`go`** is the Go version the code is written for.
-
-A module can live in any folder; it does not need to be inside `GOPATH`.
-
 ## Not installed yet
 
 - **Docker:** postponed. Needed for LocalStack (Phase 0) and from Phase 5 on.
-- **A C compiler (gcc):** needed only for `go test -race` on Windows. CI on
-  Linux runs the race detector instead.

@@ -6,11 +6,11 @@
 ## Checklist
 
 - [x] Public GitHub repo `linkpulse` with README and `docs/`
-- [ ] Install AWS CLI, Go and Docker — Go and AWS CLI done; Docker postponed
+- [ ] Install AWS CLI, Node.js and Docker — AWS CLI and Node 26 done; Docker postponed
 - [ ] Run LocalStack and create a DynamoDB table locally (needs Docker)
-- [ ] Linting and pre-commit hooks working (`make check`, `pre-commit run --all-files`)
-- [ ] Lab 00: goroutines vs OS threads
-- [ ] ADR 0002: monolith first (you write it, from `docs/adr/0000-template.md`)
+- [ ] Linting, formatting and pre-commit hooks working (`npm run check`, `pre-commit run --all-files`)
+- [ ] Lab 00: the event loop vs threads
+- [ ] ADR 0003: monolith first (you write it, from `docs/adr/0000-template.md`)
 - [ ] README written in your own words
 
 ## Concepts — explain each in 2–3 sentences
@@ -29,7 +29,8 @@
 
 ## CS fundamentals
 
-- **OS:** processes vs threads vs goroutines; the Go scheduler (M:N)
+- **OS:** processes vs threads; the event loop, libuv and its thread pool;
+  how the OS reports ready I/O (epoll on Linux, IOCP on Windows)
 - **Networks:** OSI and TCP/IP layers
 - **Databases:** what a DBMS does
 - **System design:** how to approach a design interview
@@ -40,7 +41,8 @@
 
 Repo structure, linting, formatting, pre-commit hooks, conventional commits.
 
-<!-- What does each linter in .golangci.yml catch? Pick three and explain. -->
+<!-- Pick three rules from eslint.config.js and explain what bug or
+     anti-pattern each one prevents. -->
 
 ## What I learned / what surprised me
 

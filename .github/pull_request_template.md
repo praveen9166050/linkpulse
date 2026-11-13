@@ -14,7 +14,7 @@
 
 - [ ] Layers respected: handler → service → repository; no AWS or vendor SDK imports in `domain/`
 - [ ] Unit tests for core logic; integration tests for adapters
-- [ ] `make check` passes (fmt, vet, lint, tests with `-race`)
+- [ ] `npm run check` passes (format, lint, typecheck, tests)
 - [ ] No secrets, magic numbers or swallowed errors
 - [ ] ADR added for any significant decision
 - [ ] README / docs updated

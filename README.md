@@ -20,17 +20,17 @@
 
 ## Architecture
 
-<!-- For now, one or two lines: Go services on AWS Lambda + DynamoDB.
+<!-- For now, one or two lines: TypeScript services on AWS Lambda + DynamoDB.
      Link to docs/architecture.md once it exists. -->
 
 ## Tech stack
 
-<!-- Go, AWS (Lambda, DynamoDB, ...), and what each is used for. -->
+<!-- TypeScript on Node.js, AWS (Lambda, DynamoDB, ...), and what each is used for. -->
 
 ## Getting started
 
-<!-- Prerequisites (Go version, AWS CLI) and the commands to run it locally.
-     Fill this in when there is something to run (Phase 1). -->
+<!-- Prerequisites (Node version from .nvmrc, AWS CLI), then `npm ci` and the
+     commands to run it locally. Fill this in when there is something to run (Phase 1). -->
 
 ## Project layout
 

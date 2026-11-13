@@ -1,4 +1,4 @@
-# Git hooks that run before each commit. Setup (once):
+# Git hooks that run before each commit. Setup (once per clone):
 #   pip install pre-commit
 #   pre-commit install --hook-type pre-commit --hook-type commit-msg
 # Update hook versions any time with: pre-commit autoupdate
@@ -13,32 +13,34 @@ repos:
       - id: trailing-whitespace
       - id: end-of-file-fixer
       - id: check-yaml
+      - id: check-json
+        exclude: ^tsconfig.*\.json$ # tsconfig is JSONC (comments allowed); tsc validates it
       - id: check-merge-conflict
       - id: check-added-large-files
-      - id: detect-private-key          # stop secrets before they reach GitHub
+      - id: detect-private-key # stop secrets before they reach GitHub
 
   - repo: https://github.com/compilerla/conventional-pre-commit
     rev: v4.0.0
     hooks:
-      - id: conventional-pre-commit     # commit messages must be feat:, fix:, docs: ...
+      - id: conventional-pre-commit # commit messages must be feat:, fix:, docs: ...
         stages: [commit-msg]
 
+  # Project tools, run from node_modules via npx
   - repo: local
     hooks:
-      - id: go-fmt
-        name: gofmt
-        entry: gofmt -l -w
+      - id: prettier
+        name: prettier
+        entry: npx prettier --write --ignore-unknown
         language: system
-        types: [go]
-      - id: go-vet
-        name: go vet
-        entry: go vet ./...
+        types_or: [ts, javascript, json, yaml]
+      - id: eslint
+        name: eslint
+        entry: npx eslint --fix
+        language: system
+        types_or: [ts, javascript]
+      - id: typecheck
+        name: tsc (typecheck)
+        entry: npx tsc
         language: system
         pass_filenames: false
-        types: [go]
-      - id: golangci-lint
-        name: golangci-lint
-        entry: golangci-lint run
-        language: system
-        pass_filenames: false
-        types: [go]
+        types: [ts]

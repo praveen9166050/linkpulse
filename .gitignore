@@ -1,20 +1,16 @@
-# Binaries
-/bin/
-*.exe
-*.exe~
-*.dll
-*.so
-*.dylib
+# Dependencies (restored by `npm ci`)
+node_modules/
 
-# Test and coverage output
-*.test
-*.out
-coverage.*
-*.prof
+# Build and test output
+dist/
+coverage/
+*.tsbuildinfo
+*.cpuprofile
+*.heapsnapshot
 
-# Go workspace file (local only)
-go.work
-go.work.sum
+# Logs
+npm-debug.log*
+*.log
 
 # Environment and secrets: never commit these
 .env

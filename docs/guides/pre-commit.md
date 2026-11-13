@@ -52,6 +52,7 @@ identical checks. `pre-commit autoupdate` bumps the versions.
 | `trailing-whitespace` | Spaces at the ends of lines (fixes them) |
 | `end-of-file-fixer` | Files that do not end with exactly one newline (fixes them) |
 | `check-yaml` | Broken YAML (CI and CloudFormation files are YAML) |
+| `check-json` | Broken JSON (`package.json`). Skips `tsconfig.json`: it is **JSONC** (JSON with comments), which strict JSON parsers reject; `tsc` validates it instead |
 | `check-merge-conflict` | Leftover `<<<<<<<` conflict markers |
 | `check-added-large-files` | Files over 500 KB (binaries do not belong in git) |
 | `detect-private-key` | Private keys. Bots scan public repos and abuse leaked keys within minutes |
@@ -72,30 +73,35 @@ Rejects messages that are not [conventional commits](git.md#conventional-commits
 ```yaml
   - repo: local
     hooks:
-      - id: go-vet
-        entry: go vet ./...
+      - id: eslint
+        entry: npx eslint --fix
+        language: system
+        types_or: [ts, javascript]
+      - id: typecheck
+        entry: npx tsc
         language: system
         pass_filenames: false
-        types: [go]
+        types: [ts]
 ```
 - `repo: local`: hooks defined right here rather than downloaded.
-- `entry`: the command to run.
-- `language: system`: use the tool already installed on the machine (our Go
-  and golangci-lint).
-- `pass_filenames: false`: run once on the whole module, rather than being
-  given a list of changed files (vet and lint need whole packages).
-- `types: [go]`: only run when `.go` files are staged. That is why they show
-  "(no files to check) Skipped" until there is Go code.
+- `entry`: the command to run. `npx` runs the version in this repo's
+  `node_modules/`, so the hook uses exactly the pinned tool.
+- `language: system`: use what is already installed (our `node_modules`),
+  rather than pre-commit building its own environment.
+- `types_or: [ts, javascript]`: only run when such files are staged; the
+  changed file names are appended to `entry`.
+- `pass_filenames: false`: run once on the whole project instead. `tsc`
+  needs the whole project to check types across files.
 
-The three local hooks are `gofmt` (formats in place), `go vet`, and
-`golangci-lint`.
+The three local hooks are `prettier` (formats in place), `eslint` (fixes
+what it can, fails on the rest) and `typecheck`.
 
 ## Everyday commands
 
 | Command | Does |
 | --- | --- |
 | `pre-commit run --all-files` | Run every hook on the whole repo, not just staged files |
-| `pre-commit run golangci-lint --all-files` | Run one hook |
+| `pre-commit run eslint --all-files` | Run one hook |
 | `pre-commit autoupdate` | Update hook versions in the config |
 | `pre-commit install ...` | Set up the hooks in a fresh clone (above) |
 | `git commit --no-verify` | Skip the hooks. **Don't.** CI runs the same checks anyway (Phase 2) |
@@ -105,7 +111,7 @@ The three local hooks are `gofmt` (formats in place), `go vet`, and
 ```text
 trim trailing whitespace.................................................Passed
 detect private key.......................................................Passed
-golangci-lint........................................(no files to check)Skipped
+eslint...............................................(no files to check)Skipped
 Conventional Commit......................................................Failed
 [Bad commit message] >> updated makefile
 ```
