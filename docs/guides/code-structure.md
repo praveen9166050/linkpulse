@@ -22,7 +22,8 @@ src/
 │   └── response-errors/         errors that become HTTP responses:
 │                                response.error.ts (base), bad-request, not-found,
 │                                conflict, content-too-large (.error.ts)
-├── middlewares/             error-handler.ts, not-found.ts (plain names)
+├── middlewares/             app-wide: error-handler.ts, not-found.ts;
+│                            per route: validate-body.ts (plain names)
 ├── services/                services shared by every feature: clock.service.ts
 │   └── __tests__/
 └── modules/                 ONE FOLDER PER FEATURE
@@ -109,9 +110,39 @@ variables `camelCase`. Indentation is 4 spaces.
 | Repository | `link.repository.ts` | `LinkRepository` |
 | DTO | `create-link.dto.ts`, `link-response.dto.ts` | `CreateLinkDto` + `parseCreateLinkDto`, `toLinkResponseDto` |
 | Error | `not-found.error.ts`, `invalid-short-code.error.ts` | `NotFoundError`, `InvalidShortCodeError` |
-| Middleware | `error-handler.ts` (no suffix) | `errorHandler` |
+| Middleware | `error-handler.ts`, `validate-body.ts` (no suffix) | `errorHandler`, `validateBody` |
 | Unit test | `__tests__/links.service.test.ts` | |
 | API test | `test/integration/links.api.test.ts` | |
+
+## Middleware per route
+
+A route lists its whole chain: every function a request passes through,
+in order, ending with the controller.
+
+```ts
+router.post("/api/v1/links", validateBody(parseCreateLinkDto), controller.create);
+// later: router.post(path, authenticate(), authorize(...), rateLimit(...), validateBody(...), controller.create)
+```
+
+| Order | Middleware | Ends the request with | Why here |
+| --- | --- | --- | --- |
+| 1 | `authenticate()` (later) | 401 | Who is calling? Everything after may depend on it |
+| 2 | `authorize(...)` (later) | 403 | Are they allowed? Needs the user from step 1 |
+| 3 | `rateLimit(...)` (later) | 429 | Cheap; stops abuse before any real work |
+| 4 | `validateBody(parse)` | 400 | Checks the body's shape; the controller gets a typed DTO |
+| 5 | The controller | 2xx/3xx | Only runs once every check passed |
+
+Rules:
+
+- **A middleware either calls `next()` or ends the request, never both.**
+  To reject, throw a `ResponseError` (Express passes it to `errorHandler`).
+- **Cheap and security checks first.** No work is spent on a request that
+  will be refused.
+- **Validated input is typed:** after `validateBody`, the controller
+  declares `Request<Params, unknown, TheDto>` and uses `req.body` as is,
+  with no second parse and no cast.
+- **App-wide middleware** (every request: `express.json`, `notFound`,
+  `errorHandler`) goes in `app.ts`; **route middleware** goes in the routes file.
 
 ## Class or function?
 

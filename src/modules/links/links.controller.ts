@@ -14,7 +14,7 @@
  */
 import type { Request, Response } from "express";
 import { sendJson } from "#src/response-helper.ts";
-import { parseCreateLinkDto } from "./dto/create-link.dto.ts";
+import type { CreateLinkDto } from "./dto/create-link.dto.ts";
 import { toLinkResponseDto } from "./dto/link-response.dto.ts";
 import type { LinksService } from "./links.service.ts";
 
@@ -37,12 +37,16 @@ export class LinksController {
         this.#publicBaseUrl = deps.publicBaseUrl;
     }
 
-    /** POST: shorten a URL. */
-    readonly create = async (req: Request, res: Response): Promise<void> => {
-        // express.json() has already parsed (and size-limited) the body;
-        // it is untyped JSON until the DTO checks its shape.
-        const dto = parseCreateLinkDto(req.body as unknown);
-        const link = await this.#links.createLink(dto);
+    /**
+     * POST: shorten a URL. The route runs validateBody(parseCreateLinkDto)
+     * first, so the body arrives as a checked CreateLinkDto. The third type
+     * argument of Request<Params, ResBody, ReqBody> types `req.body`.
+     */
+    readonly create = async (
+        req: Request<Record<string, never>, unknown, CreateLinkDto>,
+        res: Response,
+    ): Promise<void> => {
+        const link = await this.#links.createLink(req.body);
         sendJson(res, 201, toLinkResponseDto(link, this.#publicBaseUrl));
     };
 
