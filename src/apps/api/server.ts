@@ -1,5 +1,4 @@
-import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
-import { sendProblem } from "../../shared/http/problem.ts";
+import { createServer, type Server } from "node:http";
 import { createApp } from "./app.ts";
 
 export interface ServerOptions {
@@ -31,35 +30,12 @@ export async function startServer(options: ServerOptions): Promise<RunningServer
     // so the app is built now. This runs before the event loop can deliver
     // any request, so no request is missed.
     const baseUrl = `http://${host}:${String(boundPort(server))}`;
-    const app = createApp({ publicBaseUrl: options.publicBaseUrl ?? baseUrl });
 
-    server.on("request", (req: IncomingMessage, res: ServerResponse) => {
-        app(req, res).catch((error: unknown) => {
-            handleUnexpectedError(res, error);
-        });
-    });
+    // An Express app is a plain node:http request listener, so the server,
+    // listen() and graceful shutdown stay exactly as they were.
+    server.on("request", createApp({ publicBaseUrl: options.publicBaseUrl ?? baseUrl }));
 
     return { baseUrl, stop: () => close(server) };
-}
-
-/**
- * Last line of defence for bugs: log the details for us, and send the
- * client a generic 500 that leaks nothing about the internals.
- */
-function handleUnexpectedError(res: ServerResponse, error: unknown): void {
-    const details = error instanceof Error ? (error.stack ?? error.message) : String(error);
-    // Replaced by a structured logger in Phase 10.
-    process.stderr.write(`Unhandled error: ${details}\n`);
-
-    if (res.headersSent) {
-        res.destroy();
-        return;
-    }
-    sendProblem(res, {
-        type: "/problems/internal-error",
-        title: "Internal server error",
-        status: 500,
-    });
 }
 
 /**
